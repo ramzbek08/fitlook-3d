@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
+import { StoreEmblem } from '../components/StoreEmblem';
 import { PageHead } from '../components/ui';
+import { routeUrl } from '../delivery';
 import { inStock, STORES } from '../data';
 import { useStore } from '../store';
 
@@ -40,20 +42,20 @@ export default function MapPage() {
             </button>
           ))}
           <div className="map-card">
-            <div className="row gap-s"><span className="store-logo sm" style={{ background: cur.store.color }}>{cur.store.name[0]}</span><b>{cur.store.name}</b></div>
+            <div className="row gap-s"><StoreEmblem store={cur.store} size={28} /><b>{cur.store.name}</b></div>
             <h3>{cur.name}</h3>
             <p className="muted">{cur.address}</p>
             <div className="row gap-s small"><Icon name="bell" size={14} /> {cur.hours} · <span className="ok">{avail} mahsulot mavjud</span></div>
             <div className="row gap-s mt-s">
               <Link to={`/store/${cur.store.id}`} className="btn ink sm">Do‘konga o‘tish</Link>
-              <a className="btn ghost sm" target="_blank" rel="noreferrer" href={`https://yandex.uz/maps/?text=${encodeURIComponent('Toshkent ' + cur.address)}`}>Yo‘nalish</a>
+              <a className="btn ghost sm" target="_blank" rel="noreferrer" href={routeUrl(cur, 'mt')}>Yo‘nalish</a>
             </div>
           </div>
         </div>
         <div className="branch-list">
           {list.map((b) => (
             <button key={b.id} className={'branch' + (b.id === cur.id ? ' on' : '')} onClick={() => setSel(b.id)}>
-              <span className="store-logo sm" style={{ background: b.store.color }}>{b.store.name[0]}</span>
+              <StoreEmblem store={b.store} size={32} />
               <div><b>{b.store.name} — {b.name}</b><small>{b.address}</small><small>{b.hours}</small></div>
             </button>
           ))}

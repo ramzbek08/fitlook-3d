@@ -5,7 +5,8 @@ import { Garment } from '../components/Garment';
 import { Icon } from '../components/Icon';
 import { Empty, ProductCard, Stars, Swatch, tileBg } from '../components/ui';
 import { CATEGORY_LABEL, CATEGORY_SLOT, COLORS, discountOf, fmt, sizesOf, STORE_BY_ID } from '../data';
-import { FIT_LABEL, fitFor, recommend, sizeChart } from '../sizing';
+import { StoreEmblem } from '../components/StoreEmblem';
+import { FIT_LABEL, fitFor, recommend, shapeOf, sizeChart } from '../sizing';
 import { toast, useProduct, useStore, type Review } from '../store';
 
 export default function ProductPage() {
@@ -73,10 +74,8 @@ export default function ProductPage() {
           ) : (
             <div className="pdp-photo stage">
               <Avatar3D
-                height={profile.height}
-                weight={profile.weight}
-                body={profile.body}
-                worn={[{ category: p.category, color: color || p.colors[0], fit: fit.state }]}
+                shape={shapeOf(profile)}
+                worn={[{ category: p.category, color: color || p.colors[0], fit: fit.state, variant: p.variant }]}
               />
               <div className={'fit-chip ' + fit.state}>{size} · {FIT_LABEL[fit.state]} · {fit.percent}%</div>
             </div>
@@ -92,7 +91,7 @@ export default function ProductPage() {
 
         <div className="pdp-info">
           <Link to={`/store/${p.storeId}`} className="pdp-store">
-            <span className="store-logo sm" style={{ background: store?.color }}>{store?.name[0]}</span> {store?.name}
+            {store && <StoreEmblem store={store} size={28} />} {store?.name}
           </Link>
           <h1>{p.name}</h1>
           <div className="row gap-s muted">

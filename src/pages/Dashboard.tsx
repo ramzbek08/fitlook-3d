@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Garment } from '../components/Garment';
 import { Icon } from '../components/Icon';
+import { StoreEmblem } from '../components/StoreEmblem';
 import { Swatch, tileBg } from '../components/ui';
 import {
   CATEGORY_LABEL, CATEGORY_SLOT, CLOTH_SIZES, COLORS, discountOf, fmt, SHOE_SIZES, STORE_BY_ID, STORES,
@@ -38,7 +39,7 @@ export default function Dashboard() {
           <h1>Boshqaruv paneli</h1>
         </div>
         <label className="store-select">
-          <span className="store-logo sm" style={{ background: store.color }}>{store.name[0]}</span>
+          <StoreEmblem store={store} size={30} />
           <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
             {STORES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>

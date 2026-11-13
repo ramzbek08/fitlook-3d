@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import Avatar3D from '../components/Avatar3D';
 import { Icon } from '../components/Icon';
-import { ProductCard, useWorn } from '../components/ui';
+import { StoreEmblem } from '../components/StoreEmblem';
+import { ProductCard, useShape, useWorn } from '../components/ui';
 import { discountOf, STORES } from '../data';
 import { BODY_LABEL, recommend } from '../sizing';
 import { useStore } from '../store';
@@ -29,6 +30,8 @@ export default function Home() {
   const outfit = useStore((s) => s.outfit);
   const promoted = useStore((s) => s.promoted);
   const worn = useWorn(outfit);
+  const shape = useShape();
+  const storeReviews = useStore((s) => s.storeReviews);
   const top = products.find((p) => p.id === outfit[0]?.productId) ?? products[0];
   const rec = recommend(profile, top);
 
@@ -38,6 +41,31 @@ export default function Home() {
 
   return (
     <>
+      <section className="wrap store-home">
+        <div className="sec-head">
+          <div>
+            <div className="kicker">Raqamli savdo markazi</div>
+            <h2>Do‘konlar</h2>
+          </div>
+          <Link to="/map" className="link"><Icon name="map" size={16} /> Xaritada</Link>
+        </div>
+        <div className="store-tiles">
+          {STORES.map((s) => {
+            const count = products.filter((p) => p.storeId === s.id).length;
+            const rv = storeReviews.filter((r) => r.storeId === s.id);
+            const rating = rv.length ? rv.reduce((a, r) => a + r.rating, 0) / rv.length : s.rating;
+            return (
+              <Link key={s.id} to={`/store/${s.id}`} className="store-tile" style={{ ['--c' as string]: s.color }}>
+                <span className="store-tile-rate"><Icon name="star" size={12} fill /> {rating.toFixed(1)}</span>
+                <StoreEmblem store={s} size={72} tile={false} className="store-tile-mark" />
+                <b>{s.name}</b>
+                <small>{count} mahsulot · {s.branches.length} filial</small>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="hero wrap">
         <div className="hero-copy">
           <span className="pill"><i className="live" /> Toshkentdagi {STORES.length} ta do‘kon onlayn</span>
@@ -59,11 +87,11 @@ export default function Home() {
           </div>
         </div>
         <div className="hero-stage">
-          <Avatar3D height={profile.height} weight={profile.weight} body={profile.body} worn={worn} zoom={false} />
+          <Avatar3D shape={shape} worn={worn} zoom={false} />
           <div className="float f1">
             <small>Sizning profilingiz</small>
             <b>{profile.height} sm · {profile.weight} kg</b>
-            <span>{BODY_LABEL[profile.body]} tana</span>
+            <span>{profile.scan ? 'AI skaner · 1:1 tana' : `${BODY_LABEL[profile.body]} tana`}</span>
           </div>
           <div className="float f2">
             <small>AI Size Match</small>
@@ -87,27 +115,6 @@ export default function Home() {
             <div className="solve"><Icon name="check" size={16} /> {s}</div>
           </div>
         ))}
-      </section>
-
-      <section className="wrap section">
-        <div className="sec-head">
-          <div>
-            <div className="kicker">Raqamli savdo markazi</div>
-            <h2>Do‘konlar</h2>
-          </div>
-          <Link to="/stores" className="link">Barchasi <Icon name="arrow" size={16} /></Link>
-        </div>
-        <div className="store-row">
-          {STORES.map((s) => (
-            <Link key={s.id} to={`/store/${s.id}`} className="store-chip">
-              <span className="store-logo" style={{ background: s.color }}>{s.name[0]}</span>
-              <div>
-                <b>{s.name}</b>
-                <small>{s.tagline}</small>
-              </div>
-            </Link>
-          ))}
-        </div>
       </section>
 
       {picks.length > 0 && (

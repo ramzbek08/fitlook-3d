@@ -4,7 +4,7 @@ import Avatar3D from '../components/Avatar3D';
 import { Icon } from '../components/Icon';
 import { PageHead, useWorn } from '../components/ui';
 import { fmt } from '../data';
-import { BODY_LABEL } from '../sizing';
+import { BODY_LABEL, shapeOf } from '../sizing';
 import { toast, useStore } from '../store';
 
 export default function Profile() {
@@ -74,7 +74,7 @@ export default function Profile() {
           </button>
         </div>
         <section className="card profile-avatar">
-          <Avatar3D height={profile.height} weight={profile.weight} body={profile.body} worn={worn} />
+          <Avatar3D shape={shapeOf(profile)} worn={worn} />
           <Link to="/fitting" className="btn ink full"><Icon name="cube" /> 3D xonaga o‘tish</Link>
         </section>
       </div>

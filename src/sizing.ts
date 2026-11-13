@@ -19,6 +19,36 @@ export interface Measurements {
   shoe: number;
 }
 
+/** Result of the photo body scan: proportions the tape-measure numbers can't express. */
+export interface BodyScan {
+  shoulder: number;
+  legRatio: number;
+  skin: string;
+  photo: string;
+  date: string;
+  confidence: number;
+}
+
+/** Everything the 3D avatar needs to be built at real (1:1) scale. */
+export interface BodyShape {
+  height: number;
+  weight: number;
+  body: BodyType;
+  chest: number;
+  waist: number;
+  hips: number;
+  shoulder?: number;
+  legRatio?: number;
+  skin?: string;
+}
+
+export function shapeOf(m: Measurements & { scan?: BodyScan }): BodyShape {
+  return {
+    height: m.height, weight: m.weight, body: m.body, chest: m.chest, waist: m.waist, hips: m.hips,
+    shoulder: m.scan?.shoulder, legRatio: m.scan?.legRatio, skin: m.scan?.skin,
+  };
+}
+
 const CHEST = [84, 88, 93, 99, 105, 111];
 const WAIST = [66, 70, 75, 81, 87, 93];
 const HIPS = [88, 92, 98, 104, 110, 116];

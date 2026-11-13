@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Garment } from '../components/Garment';
 import { Icon } from '../components/Icon';
+import { StoreEmblem } from '../components/StoreEmblem';
 import { Empty, PageHead, tileBg } from '../components/ui';
 import { fmt, STORES } from '../data';
+import { routeUrl } from '../delivery';
 import { ORDER_STEPS, orderStage, storeName, toast, useStore, type Order } from '../store';
 
 const PAY_LABEL: Record<Order['payment'], string> = { click: 'Click', payme: 'Payme', karta: 'Bank kartasi', naqd: 'Naqd' };
@@ -31,14 +33,18 @@ export default function Orders() {
       <div className="stack">
         {orders.map((o) => {
           const stage = orderStage(o, now);
-          const branch = STORES.flatMap((s) => s.branches).find((b) => b.id === o.branchId);
+          const pickups = (o.branchIds ?? (o.branchId ? [o.branchId] : [])).flatMap((bid) => {
+            const store = STORES.find((s) => s.branches.some((b) => b.id === bid));
+            const branch = store?.branches.find((b) => b.id === bid);
+            return store && branch ? [{ store, branch }] : [];
+          });
           return (
             <article key={o.id} className={'card order' + (o.id === id ? ' fresh' : '')}>
               {o.id === id && <div className="success"><Icon name="check" /> Buyurtma qabul qilindi! Holatini shu yerda kuzating.</div>}
               <div className="row between wrap-row">
                 <div>
                   <b className="order-id">#{o.id}</b>
-                  <div className="muted small">{new Date(o.createdAt).toLocaleString('ru-RU')} · {PAY_LABEL[o.payment]} · {o.method === 'kuryer' ? 'Kuryer: ' + o.contact.address : 'Olib ketish: ' + (branch?.name ?? '')}</div>
+                  <div className="muted small">{new Date(o.createdAt).toLocaleString('ru-RU')} · {PAY_LABEL[o.payment]} · {o.method === 'kuryer' ? (o.couriers ? 'Yandex Dostavka: ' : 'Kuryer: ') + o.contact.address : 'Olib ketish: ' + pickups.map((x) => x.branch.name).join(', ')}</div>
                 </div>
                 <b className="order-total">{fmt(o.total)}</b>
               </div>
@@ -55,6 +61,34 @@ export default function Orders() {
                   ))}
                 </div>
               )}
+
+              {stage >= 0 && o.method === 'kuryer' && o.couriers?.map((c) => {
+                const store = STORES.find((s) => s.branches.some((b) => b.id === c.branchId));
+                return (
+                  <div key={c.branchId} className="courier-card">
+                    <span className="ya-mark">Я</span>
+                    <div className="grow">
+                      <b>{c.kind === 'express' ? 'Yandex Ekspress' : 'Yandex Kun davomida'}{store ? ` · ${store.name}` : ''}</b>
+                      <small className="muted">{c.eta} · {c.distanceKm} km · {c.price ? fmt(c.price) : 'bepul'}{c.claimId ? ` · ariza ${c.claimId.slice(0, 8)}` : ''}</small>
+                    </div>
+                    {c.trackUrl ? (
+                      <a className="btn sm dark" href={c.trackUrl} target="_blank" rel="noreferrer">Kuryerni kuzatish</a>
+                    ) : (
+                      <span className="badge">{c.live ? 'Kuryer qidirilmoqda' : 'Demo rejim'}</span>
+                    )}
+                  </div>
+                );
+              })}
+              {stage >= 0 && o.method === 'olib-ketish' && pickups.map(({ store, branch: b }) => (
+                <div key={b.id} className="courier-card">
+                  <StoreEmblem store={store} size={30} />
+                  <div className="grow">
+                    <b>{store.name} — {b.name}</b>
+                    <small className="muted">{b.address} · {b.hours}</small>
+                  </div>
+                  <a className="btn sm ghost" href={routeUrl(b, 'mt')} target="_blank" rel="noreferrer">Yo‘nalish</a>
+                </div>
+              ))}
 
               <div className="order-lines">
                 {o.lines.map((l) => {

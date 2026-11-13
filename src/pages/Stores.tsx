@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Garment } from '../components/Garment';
 import { Icon } from '../components/Icon';
+import { StoreEmblem } from '../components/StoreEmblem';
 import { PageHead, Stars } from '../components/ui';
 import { discountOf, STORES } from '../data';
 import { useStore } from '../store';
@@ -25,6 +26,7 @@ export default function Stores() {
                   ))}
                 </div>
                 {maxOff > 0 && <span className="badge coral">−{maxOff}% gacha</span>}
+                <StoreEmblem store={s} size={56} tile={false} className="store-cover-mark" />
               </div>
               <div className="store-info">
                 <div className="row between">

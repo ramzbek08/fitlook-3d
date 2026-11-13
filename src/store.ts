@@ -4,18 +4,22 @@ import {
   CATEGORY_SLOT,
   SEED_PRODUCTS,
   SEED_REVIEWS,
+  SEED_STORE_REVIEWS,
   STORE_BY_ID,
   type Category,
   type Product,
   type Slot,
+  type StoreReview,
 } from './data';
-import { estimate, type BodyType, type Measurements } from './sizing';
+import type { Courier } from './delivery';
+import { estimate, type BodyScan, type BodyType, type Measurements } from './sizing';
 
 export interface Profile extends Measurements {
   name: string;
   phone: string;
   measured: boolean;
   premium: boolean;
+  scan?: BodyScan;
 }
 
 export interface CartItem {
@@ -43,6 +47,10 @@ export interface Order {
   contact: { name: string; phone: string; address: string };
   method: 'kuryer' | 'olib-ketish';
   branchId?: string;
+  /** One pickup branch per store in the order. */
+  branchIds?: string[];
+  /** One Yandex courier per store in the order. */
+  couriers?: Courier[];
   payment: 'naqd' | 'karta' | 'click' | 'payme';
   status: number;
   cancelled?: boolean;
@@ -100,6 +108,7 @@ interface State {
   alerts: Record<string, number>;
   looks: Look[];
   reviews: Review[];
+  storeReviews: StoreReview[];
   promoted: string[];
   plans: Record<string, Plan['plan']>;
   outfit: LookItem[];
@@ -108,6 +117,7 @@ interface State {
   updateProfile: (p: Partial<Profile>) => void;
   addToCart: (productId: string, size: string, color: string, qty?: number) => void;
   setQty: (key: string, qty: number) => void;
+  setCartSize: (key: string, size: string) => void;
   removeFromCart: (key: string) => void;
   setPromo: (code: string) => void;
   placeOrder: (o: Omit<Order, 'id' | 'createdAt' | 'lines' | 'status'>) => string;
@@ -119,6 +129,7 @@ interface State {
   saveLook: (name: string, items: LookItem[]) => void;
   removeLook: (id: string) => void;
   addReview: (r: Omit<Review, 'id' | 'date'>) => void;
+  addStoreReview: (r: Omit<StoreReview, 'id' | 'date'>) => void;
   setOutfit: (items: LookItem[]) => void;
   wear: (item: LookItem) => void;
   takeOff: (productId: string) => void;
@@ -138,6 +149,7 @@ const initial = () => ({
   alerts: {} as Record<string, number>,
   looks: [] as Look[],
   reviews: SEED_REVIEWS as Review[],
+  storeReviews: SEED_STORE_REVIEWS,
   promoted: ['p5', 'p9'],
   plans: {} as Record<string, Plan['plan']>,
   outfit: [
@@ -166,6 +178,16 @@ export const useStore = create<State>()(
         }),
       setQty: (key, qty) =>
         set((s) => ({ cart: s.cart.map((c) => (c.key === key ? { ...c, qty: Math.max(1, qty) } : c)) })),
+      setCartSize: (key, size) =>
+        set((s) => {
+          const item = s.cart.find((c) => c.key === key);
+          if (!item || item.size === size) return {};
+          const nextKey = `${item.productId}|${size}|${item.color}`;
+          const twin = s.cart.find((c) => c.key === nextKey);
+          if (twin)
+            return { cart: s.cart.filter((c) => c.key !== key).map((c) => (c.key === nextKey ? { ...c, qty: c.qty + item.qty } : c)) };
+          return { cart: s.cart.map((c) => (c.key === key ? { ...c, key: nextKey, size } : c)) };
+        }),
       removeFromCart: (key) => set((s) => ({ cart: s.cart.filter((c) => c.key !== key) })),
       setPromo: (promo) => set({ promo }),
 
@@ -213,6 +235,8 @@ export const useStore = create<State>()(
 
       addReview: (r) =>
         set((s) => ({ reviews: [{ ...r, id: uid(), date: new Date().toISOString().slice(0, 10) }, ...s.reviews] })),
+      addStoreReview: (r) =>
+        set((s) => ({ storeReviews: [{ ...r, id: uid(), date: new Date().toISOString().slice(0, 10) }, ...s.storeReviews] })),
 
       setOutfit: (outfit) => set({ outfit }),
       wear: (item) =>
@@ -246,7 +270,17 @@ export const useStore = create<State>()(
 
       reset: () => set(initial()),
     }),
-    { name: 'fitlook-3d-v1' },
+    {
+      name: 'fitlook-3d-v1',
+      version: 2,
+      migrate: (persisted, version) => {
+        const s = persisted as Partial<State>;
+        if (version < 2 && s.products) {
+          s.products = s.products.map((p) => ({ ...p, variant: SEED_PRODUCTS.find((x) => x.id === p.id)?.variant ?? p.variant }));
+        }
+        return s as State;
+      },
+    },
   ),
 );
 

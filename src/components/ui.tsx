@@ -6,7 +6,7 @@ import { toast, useStore, type LookItem } from '../store';
 import { colorHex, Garment } from './Garment';
 import { Icon } from './Icon';
 import type { Worn } from './Avatar3D';
-import { fitFor } from '../sizing';
+import { fitFor, shapeOf, type BodyShape } from '../sizing';
 
 export function Stars({ value, size = 14 }: { value: number; size?: number }) {
   return (
@@ -129,6 +129,11 @@ export function useWorn(items: LookItem[]): Worn[] {
   return items.flatMap((i) => {
     const p = products.find((x) => x.id === i.productId);
     if (!p) return [];
-    return [{ category: p.category, color: i.color, fit: fitFor(profile, p, i.size).state }];
+    return [{ category: p.category, color: i.color, fit: fitFor(profile, p, i.size).state, variant: p.variant }];
   });
+}
+
+export function useShape(): BodyShape {
+  const profile = useStore((s) => s.profile);
+  return shapeOf(profile);
 }

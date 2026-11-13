@@ -5,7 +5,7 @@ import { Garment } from '../components/Garment';
 import { Icon } from '../components/Icon';
 import { Swatch, tileBg, useWorn } from '../components/ui';
 import { CATEGORY_SLOT, fmt, sizesOf, SLOT_LABEL, STORE_BY_ID, type Slot } from '../data';
-import { BODY_LABEL, estimate, FIT_LABEL, fitFor, recommend, type BodyType } from '../sizing';
+import { BODY_LABEL, estimate, FIT_LABEL, fitFor, recommend, shapeOf, type BodyType } from '../sizing';
 import { toast, useStore } from '../store';
 
 const SLOTS: Slot[] = ['top', 'bottom', 'full', 'shoes', 'head'];
@@ -50,7 +50,7 @@ export default function Fitting() {
               <button className={'tog' + (heat ? ' on' : '')} onClick={() => setHeat(!heat)}><Icon name="eye" size={16} /> Moslik xaritasi</button>
             </div>
           </div>
-          <Avatar3D height={profile.height} weight={profile.weight} body={profile.body} worn={worn} heatmap={heat} autoRotate={rotate} />
+          <Avatar3D shape={shapeOf(profile)} worn={worn} heatmap={heat} autoRotate={rotate} />
           {heat && (
             <div className="legend">
               <span><i className="tight" /> Tor</span>
@@ -71,6 +71,14 @@ export default function Fitting() {
               <h3>Tana parametrlari</h3>
               <Link to="/size" className="link small">Aniq o‘lchamlar</Link>
             </div>
+            {profile.scan ? (
+              <div className="scan-mini">
+                <img src={profile.scan.photo} alt="" />
+                <div><b>1:1 AI tana</b><small className="muted">Skan {profile.scan.date} · aniqlik {profile.scan.confidence}%</small></div>
+              </div>
+            ) : (
+              <Link to="/size" className="scan-cta"><Icon name="spark" size={16} /> Rasm orqali tanangizni 1:1 skanerlang</Link>
+            )}
             <label className="range">
               <span>Bo‘y <b>{profile.height} sm</b></span>
               <input type="range" min={145} max={205} value={profile.height} onChange={(e) => setBody({ height: +e.target.value })} />
