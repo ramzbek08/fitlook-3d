@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Garment } from '../components/Garment';
+import { ProductImage } from '../components/ProductImage';
 import { Icon } from '../components/Icon';
 import { StoreEmblem } from '../components/StoreEmblem';
 import { Empty, PageHead, tileBg } from '../components/ui';
@@ -95,7 +95,7 @@ export default function Orders() {
                   const p = products.find((x) => x.id === l.productId);
                   return (
                     <Link key={l.key} to={`/product/${l.productId}`} className="order-line">
-                      <div className="order-img" style={{ background: tileBg(l.color) }}>{p && <Garment category={p.category} color={l.color} />}</div>
+                      <div className="order-img" style={{ background: tileBg(l.color) }}>{p && <ProductImage p={p} color={l.color} />}</div>
                       <div>
                         <b>{l.name}</b>
                         <small className="muted">{storeName(l.storeId)} · {l.size} · {l.qty} dona</small>

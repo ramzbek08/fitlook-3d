@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { CATEGORY_LABEL, COLORS, discountOf, fmt, inStock, STORE_BY_ID, type Product } from '../data';
 import { recommend } from '../sizing';
 import { toast, useStore, type LookItem } from '../store';
-import { colorHex, Garment } from './Garment';
+import { colorHex } from './Garment';
+import { ProductImage } from './ProductImage';
 import { Icon } from './Icon';
 import type { Worn } from './Avatar3D';
 import { fitFor, shapeOf, type BodyShape } from '../sizing';
@@ -50,7 +51,7 @@ export function ProductCard({ p }: { p: Product }) {
   return (
     <article className="pcard">
       <Link to={`/product/${p.id}`} className="pcard-img" style={{ background: tileBg(p.colors[0]) }}>
-        <Garment category={p.category} color={p.colors[0]} />
+        <ProductImage p={p} color={p.colors[0]} />
         <div className="pcard-badges">
           {off > 0 && <span className="badge coral">−{off}%</span>}
           {p.tags.includes('new') && <span className="badge ink">Yangi</span>}

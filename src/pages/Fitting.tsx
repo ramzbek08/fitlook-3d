@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar3D from '../components/Avatar3D';
-import { Garment } from '../components/Garment';
+import { ProductImage } from '../components/ProductImage';
 import { Icon } from '../components/Icon';
 import { Swatch, tileBg, useWorn } from '../components/ui';
 import { CATEGORY_SLOT, fmt, sizesOf, SLOT_LABEL, STORE_BY_ID, type Slot } from '../data';
@@ -102,7 +102,7 @@ export default function Fitting() {
             {lines.length === 0 && <p className="muted small">Pastdan kiyim tanlang — maneken darhol kiyinadi.</p>}
             {lines.map(({ o, p, fit }) => (
               <div key={p.id} className="worn">
-                <div className="worn-img" style={{ background: tileBg(o.color) }}><Garment category={p.category} color={o.color} /></div>
+                <div className="worn-img" style={{ background: tileBg(o.color) }}><ProductImage p={p} color={o.color} /></div>
                 <div className="grow">
                   <Link to={`/product/${p.id}`} className="worn-name">{p.name}</Link>
                   <small className="muted">{STORE_BY_ID[p.storeId]?.name} · {fmt(p.price)}</small>
@@ -157,7 +157,7 @@ export default function Fitting() {
                     className={'pick' + (on ? ' on' : '')}
                     onClick={() => (on ? takeOff(p.id) : wear({ productId: p.id, size: recommend(profile, p).size, color: p.colors[0] }))}
                   >
-                    <div className="pick-img" style={{ background: tileBg(p.colors[0]) }}><Garment category={p.category} color={p.colors[0]} /></div>
+                    <div className="pick-img" style={{ background: tileBg(p.colors[0]) }}><ProductImage p={p} color={p.colors[0]} /></div>
                     <b>{p.name}</b>
                     <small>{fmt(p.price)}</small>
                     {on && <span className="pick-on"><Icon name="check" size={14} /></span>}

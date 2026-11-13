@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Avatar3D from '../components/Avatar3D';
-import { Garment } from '../components/Garment';
+import { ProductImage } from '../components/ProductImage';
 import { Icon } from '../components/Icon';
 import { Empty, ProductCard, Stars, Swatch, tileBg } from '../components/ui';
 import { CATEGORY_LABEL, CATEGORY_SLOT, COLORS, discountOf, fmt, sizesOf, STORE_BY_ID } from '../data';
@@ -69,7 +69,7 @@ export default function ProductPage() {
           </div>
           {view === 'photo' ? (
             <div className="pdp-photo" style={{ background: tileBg(color || p.colors[0]) }}>
-              <Garment category={p.category} color={color || p.colors[0]} />
+              <ProductImage p={p} color={color || p.colors[0]} />
             </div>
           ) : (
             <div className="pdp-photo stage">
@@ -83,7 +83,7 @@ export default function ProductPage() {
           <div className="thumbs">
             {p.colors.map((c) => (
               <button key={c} className={'thumb' + (c === color ? ' on' : '')} style={{ background: tileBg(c) }} onClick={() => setColor(c)}>
-                <Garment category={p.category} color={c} />
+                <ProductImage p={p} color={c} />
               </button>
             ))}
           </div>

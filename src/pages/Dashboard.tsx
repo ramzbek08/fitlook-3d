@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Garment } from '../components/Garment';
+import { ProductImage } from '../components/ProductImage';
 import { Icon } from '../components/Icon';
 import { StoreEmblem } from '../components/StoreEmblem';
 import { Swatch, tileBg } from '../components/ui';
@@ -150,7 +150,7 @@ function Products({ storeId }: { storeId: string }) {
               <tr key={p.id}>
                 <td>
                   <div className="row gap-s">
-                    <div className="cart-img xs" style={{ background: tileBg(p.colors[0]) }}><Garment category={p.category} color={p.colors[0]} /></div>
+                    <div className="cart-img xs" style={{ background: tileBg(p.colors[0]) }}><ProductImage p={p} color={p.colors[0]} /></div>
                     <div><b>{p.name}</b><small className="muted block">{CATEGORY_LABEL[p.category]}</small></div>
                   </div>
                 </td>
@@ -201,7 +201,7 @@ function ProductForm({ initial, onClose, onSave }: { initial: Product; onClose: 
       >
         <div className="row between"><h3>{initial.name ? 'Tahrirlash' : 'Yangi mahsulot'}</h3><button type="button" className="icon-btn" onClick={onClose}><Icon name="x" /></button></div>
         <div className="pform">
-          <div className="pform-preview" style={{ background: tileBg(p.colors[0] ?? 'grey') }}><Garment category={p.category} color={p.colors[0] ?? 'grey'} /></div>
+          <div className="pform-preview" style={{ background: tileBg(p.colors[0] ?? 'grey') }}><ProductImage p={p} color={p.colors[0] ?? 'grey'} /></div>
           <div className="stack-s grow">
             <label className="field"><span>Nomi</span><input className="input" value={p.name} onChange={(e) => set('name', e.target.value)} /></label>
             <div className="form2">
@@ -287,7 +287,7 @@ function Promo({ storeId }: { storeId: string }) {
       <div className="promo-list">
         {products.map((p) => (
           <label key={p.id} className="promo-item">
-            <div className="cart-img sm" style={{ background: tileBg(p.colors[0]) }}><Garment category={p.category} color={p.colors[0]} /></div>
+            <div className="cart-img sm" style={{ background: tileBg(p.colors[0]) }}><ProductImage p={p} color={p.colors[0]} /></div>
             <div className="grow"><b>{p.name}</b><small className="muted block">{fmt(p.price)}{discountOf(p) ? ` · −${discountOf(p)}%` : ''}</small></div>
             <input type="checkbox" className="switch" checked={promoted.includes(p.id)} onChange={() => { togglePromote(p.id); toast(promoted.includes(p.id) ? 'Reklama to‘xtatildi' : 'Reklama yoqildi'); }} />
           </label>

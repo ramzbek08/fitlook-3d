@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Garment } from '../components/Garment';
+import { ProductImage } from '../components/ProductImage';
 import { Icon } from '../components/Icon';
 import { StoreEmblem } from '../components/StoreEmblem';
 import { PageHead, Stars } from '../components/ui';
@@ -22,7 +22,7 @@ export default function Stores() {
               <div className="store-cover" style={{ background: s.color }}>
                 <div className="store-cover-items">
                   {list.slice(0, 3).map((p) => (
-                    <Garment key={p.id} category={p.category} color={p.colors[0]} />
+                    <ProductImage key={p.id} p={p} color={p.colors[0]} />
                   ))}
                 </div>
                 {maxOff > 0 && <span className="badge coral">−{maxOff}% gacha</span>}

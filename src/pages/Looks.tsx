@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Garment } from '../components/Garment';
+import { ProductImage } from '../components/ProductImage';
 import { Icon } from '../components/Icon';
 import { Empty, PageHead, tileBg } from '../components/ui';
 import { CATEGORY_SLOT, fmt, inStock, type Category, type Product } from '../data';
@@ -88,7 +88,7 @@ export default function Looks() {
                   <div className="look-stack">
                     {items.map((it, j) => (
                       <div key={it.productId} className="look-tile" style={{ background: tileBg(it.color), zIndex: 10 - j }}>
-                        <Garment category={list[j].category} color={it.color} />
+                        <ProductImage p={list[j]} color={it.color} />
                       </div>
                     ))}
                   </div>
@@ -116,7 +116,7 @@ export default function Looks() {
                 <div key={l.id} className="look-card">
                   <div className="look-stack">
                     {list.map(({ it, p }, j) => (
-                      <div key={p.id} className="look-tile" style={{ background: tileBg(it.color), zIndex: 10 - j }}><Garment category={p.category} color={it.color} /></div>
+                      <div key={p.id} className="look-tile" style={{ background: tileBg(it.color), zIndex: 10 - j }}><ProductImage p={p} color={it.color} /></div>
                     ))}
                   </div>
                   <div className="row between"><b>{l.name}</b><button className="icon-btn sm" onClick={() => removeLook(l.id)}><Icon name="trash" size={16} /></button></div>

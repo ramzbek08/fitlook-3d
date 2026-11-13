@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Garment } from '../components/Garment';
+import { ProductImage } from '../components/ProductImage';
 import { Icon } from '../components/Icon';
 import { Empty, PageHead, ProductCard, tileBg } from '../components/ui';
 import { fmt } from '../data';
@@ -27,7 +27,7 @@ export default function Wishlist() {
           const hit = p.price <= target;
           return (
             <div key={p.id} className="alert-line">
-              <div className="cart-img sm" style={{ background: tileBg(p.colors[0]) }}><Garment category={p.category} color={p.colors[0]} /></div>
+              <div className="cart-img sm" style={{ background: tileBg(p.colors[0]) }}><ProductImage p={p} color={p.colors[0]} /></div>
               <Link to={`/product/${p.id}`} className="grow"><b>{p.name}</b><small className="muted">Hozir {fmt(p.price)} · kutilgan {fmt(target)}</small></Link>
               <span className={'badge ' + (hit ? 'ok' : 'mute')}>{hit ? 'Narx tushdi!' : 'Kuzatilmoqda'}</span>
               <button className="icon-btn sm" onClick={() => { setAlert(p.id, null); toast('O‘chirildi'); }}><Icon name="x" size={16} /></button>

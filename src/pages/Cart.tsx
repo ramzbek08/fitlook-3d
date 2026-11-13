@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar3D, { type Worn } from '../components/Avatar3D';
-import { Garment } from '../components/Garment';
+import { ProductImage } from '../components/ProductImage';
 import { Icon } from '../components/Icon';
 import { Empty, PageHead, tileBg } from '../components/ui';
 import { CATEGORY_SLOT, COLORS, fmt, sizesOf, STORE_BY_ID, type Product, type Slot } from '../data';
@@ -133,7 +133,7 @@ export default function Cart() {
           <div className="tryon-list">
             {lines.map((l) => (
               <button key={l.c.key} className={'tryon-item' + (l.worn ? ' on' : '')} onClick={() => toggle(l)}>
-                <span className="tryon-thumb" style={{ background: tileBg(l.c.color) }}><Garment category={l.p.category} color={l.c.color} /></span>
+                <span className="tryon-thumb" style={{ background: tileBg(l.c.color) }}><ProductImage p={l.p} color={l.c.color} /></span>
                 <span className="grow">
                   <b>{l.p.name}</b>
                   <small className="muted">{l.worn ? 'Kiyilgan' : l.hidden ? 'Yechilgan' : 'Boshqa kiyim bilan almashadi'} · {l.c.size}</small>
@@ -152,7 +152,7 @@ export default function Cart() {
         <div className="card">
           {lines.map(({ c, p, fit, rec }) => (
             <div key={c.key} className="cart-line">
-              <Link to={`/product/${p.id}`} className="cart-img" style={{ background: tileBg(c.color) }}><Garment category={p.category} color={c.color} /></Link>
+              <Link to={`/product/${p.id}`} className="cart-img" style={{ background: tileBg(c.color) }}><ProductImage p={p} color={c.color} /></Link>
               <div className="grow">
                 <small className="muted">{STORE_BY_ID[p.storeId]?.name}</small>
                 <Link to={`/product/${p.id}`} className="cart-name">{p.name}</Link>

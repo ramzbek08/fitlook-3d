@@ -803,3 +803,16 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; }
   .addr-row .field.flat { width: auto; }
   .big-rate { font-size: 44px; }
 }
+
+/* Real product photos */
+img.photo { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; user-select: none; }
+.pcard-img, .pdp-photo, .thumb, .worn-img, .pick-img, .look-tile, .cart-img, .order-img, .pform-preview, .tryon-thumb { overflow: hidden; }
+.pcard-img img.photo { transition: transform 0.4s; }
+.pcard:hover .pcard-img img.photo { transform: scale(1.04); }
+.thumb img.photo { border-radius: 12px; }
+.store-cover-items:has(img.photo) { width: 100%; justify-content: center; padding: 0 12px 16px; }
+.store-cover-items img.photo { width: clamp(64px, 31%, 112px); height: auto; aspect-ratio: 1; margin: 0 -6px; border-radius: 18px; border: 3px solid #fff; box-shadow: 0 10px 24px rgba(0,0,0,.22); }
+.store-cover-items img.photo:nth-child(1) { transform: rotate(-7deg) translateY(4px); }
+.store-cover-items img.photo:nth-child(2) { position: relative; z-index: 1; transform: translateY(-6px); }
+.store-cover-items img.photo:nth-child(3) { transform: rotate(7deg) translateY(4px); }
+.store-cover { overflow: hidden; }
