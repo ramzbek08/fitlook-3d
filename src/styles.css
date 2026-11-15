@@ -601,7 +601,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; }
 
 /* home: square store tiles */
 .store-home { padding-top: 28px; }
-.store-tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+.store-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .store-tile { position: relative; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 22px; text-align: center;
   background: linear-gradient(160deg, #fff 55%, color-mix(in srgb, var(--c) 14%, #fff)); box-shadow: var(--sh), inset 0 0 0 1.5px color-mix(in srgb, var(--c) 18%, transparent); transition: transform .18s, box-shadow .18s; }
 .store-tile:hover { transform: translateY(-4px); box-shadow: 0 14px 30px color-mix(in srgb, var(--c) 28%, transparent), inset 0 0 0 2px var(--c); }
@@ -737,6 +737,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; }
   .mainnav a { padding: 8px 8px; font-size: 13px; }
   .search { max-width: 220px; }
   .hide-m { display: none !important; }
+  .store-tiles, .stores-grid { grid-template-columns: 1fr 1fr !important; }
 }
 @media (max-width: 1024px) {
   .only-m { display: inline-grid !important; }
@@ -761,8 +762,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; }
   .reviews { grid-template-columns: 1fr; }
   .kpis { grid-template-columns: 1fr 1fr; }
   .map { height: 460px; }
-  .store-tiles { grid-template-columns: repeat(3, 1fr); }
-  .stores-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+  .store-tiles, .stores-grid { grid-template-columns: 1fr 1fr !important; gap: 14px; }
   .store-info-grid, .branch-info, .tryon { grid-template-columns: 1fr; }
   .store-info-grid { margin-top: 20px; }
   .scan-card { grid-template-columns: 1fr 1fr; }
