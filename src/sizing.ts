@@ -51,9 +51,17 @@ export interface BodyShape {
 }
 
 export function shapeOf(m: Measurements & { scan?: BodyScan; gender?: Gender; facePhoto?: string }): BodyShape {
+  const gender = m.gender ?? 'male';
+  const height = Number.isFinite(m.height) ? m.height : 172;
+  const weight = Number.isFinite(m.weight) ? m.weight : 70;
+  const body = m.body ?? 'ortacha';
+  const fallback = estimate(height, weight, body, gender);
   return {
-    height: m.height, weight: m.weight, body: m.body, chest: m.chest, waist: m.waist, hips: m.hips,
-    gender: m.gender ?? 'male',
+    height, weight, body,
+    chest: Number.isFinite(m.chest) ? m.chest : fallback.chest,
+    waist: Number.isFinite(m.waist) ? m.waist : fallback.waist,
+    hips: Number.isFinite(m.hips) ? m.hips : fallback.hips,
+    gender,
     facePhoto: m.facePhoto,
     shoulder: m.scan?.shoulder, legRatio: m.scan?.legRatio, skin: m.scan?.skin,
   };

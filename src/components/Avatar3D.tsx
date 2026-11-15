@@ -23,8 +23,8 @@ interface Props {
 }
 
 const HEAT: Record<FitState, string> = { tight: '#FF4D4D', good: '#22C55E', loose: '#3B82F6' };
-/** Thinner clothing layers so garments hug the body instead of looking inflated / toy-like. */
-const INFLATE: Record<FitState, number> = { tight: 0.0025, good: 0.008, loose: 0.02 };
+/** Clothing shell thickness — enough overlap so pieces don't show skin gaps. */
+const INFLATE: Record<FitState, number> = { tight: 0.006, good: 0.012, loose: 0.024 };
 
 /** Body the base mesh was modelled for (cm). Measurements are applied relative to it. */
 const BASE = { height: 172, chest: 92, waist: 74, hips: 97 };
@@ -50,7 +50,7 @@ export default function Avatar3D({ shape, worn, heatmap = false, autoRotate = tr
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.18;
+    renderer.toneMappingExposure = 1.22;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     el.appendChild(renderer.domElement);
@@ -60,42 +60,60 @@ export default function Avatar3D({ shape, worn, heatmap = false, autoRotate = tr
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     pmrem.dispose();
 
-    const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
-    camera.position.set(0.35, 1.25, 4.6);
+    // Instagram / Meta avatar studio: purple → coral gradient backdrop
+    const bgCv = document.createElement('canvas');
+    bgCv.width = 4; bgCv.height = 256;
+    const bgx = bgCv.getContext('2d')!;
+    const grd = bgx.createLinearGradient(0, 0, 0, 256);
+    grd.addColorStop(0, '#5b2d8e');
+    grd.addColorStop(0.45, '#c44a6a');
+    grd.addColorStop(1, '#ff7a32');
+    bgx.fillStyle = grd;
+    bgx.fillRect(0, 0, 4, 256);
+    const bgTex = new THREE.CanvasTexture(bgCv);
+    bgTex.colorSpace = THREE.SRGBColorSpace;
+    const backdrop = new THREE.Mesh(
+      new THREE.PlaneGeometry(8, 10),
+      new THREE.MeshBasicMaterial({ map: bgTex, depthWrite: false }),
+    );
+    backdrop.position.set(0, 1.4, -2.2);
+    scene.add(backdrop);
 
-    scene.add(new THREE.HemisphereLight(0xfff6ee, 0xb8c0d0, 0.65));
-    const key = new THREE.DirectionalLight(0xfff5ea, 2.05);
-    key.position.set(2.2, 4, 3);
+    const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
+    camera.position.set(0.7, 1.05, 4.5);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xffc8a0, 0.75));
+    const key = new THREE.DirectionalLight(0xffffff, 2.15);
+    key.position.set(2.4, 4.2, 3.2);
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
     key.shadow.camera.near = 1;
     key.shadow.camera.far = 12;
     key.shadow.bias = -0.0004;
     scene.add(key);
-    const rim = new THREE.DirectionalLight(0xff8a6a, 0.8);
-    rim.position.set(-3, 2.5, -2.5);
+    const fill = new THREE.DirectionalLight(0xffd0b8, 0.7);
+    fill.position.set(-2.5, 2, 2);
+    scene.add(fill);
+    const rim = new THREE.DirectionalLight(0xff8a6a, 0.95);
+    rim.position.set(-2.5, 2.8, -2.8);
     scene.add(rim);
 
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(0.75, 64), new THREE.ShadowMaterial({ opacity: 0.22 }));
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(1.1, 64),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, metalness: 0, transparent: true, opacity: 0.35 }),
+    );
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.62, 0.64, 96),
-      new THREE.MeshBasicMaterial({ color: 0xff5a36, transparent: true, opacity: 0.55 }),
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.002;
-    scene.add(ring);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0.88, 0);
+    controls.target.set(0, 0.92, 0);
     controls.enablePan = false;
     controls.enableDamping = true;
-    controls.minDistance = 1.4;
-    controls.maxDistance = 7.5;
-    controls.maxPolarAngle = Math.PI / 1.9;
-    controls.autoRotateSpeed = 2.2;
+    controls.minDistance = 2.0;
+    controls.maxDistance = 7.0;
+    controls.maxPolarAngle = Math.PI / 1.85;
+    controls.autoRotateSpeed = 1.6;
 
     const c: Ctx = { renderer, scene, camera, controls, model: null, raf: 0 };
     ctx.current = c;
@@ -226,7 +244,7 @@ function fabricTexture(kind: Fabric) {
 const FABRIC_LOOK: Record<Fabric, { roughness: number; sheen: number; clearcoat?: number; bump: number }> = {
   knit: { roughness: 0.88, sheen: 0.55, bump: 1.35 },
   denim: { roughness: 0.82, sheen: 0.25, bump: 1.6 },
-  wool: { roughness: 0.74, sheen: 0.5, bump: 1.1 },
+  wool: { roughness: 0.68, sheen: 0.55, bump: 0.55 },
   nylon: { roughness: 0.38, sheen: 0.15, clearcoat: 0.35, bump: 0.55 },
   satin: { roughness: 0.22, sheen: 1, clearcoat: 0.45, bump: 0.15 },
   linen: { roughness: 0.86, sheen: 0.4, bump: 1.45 },
@@ -389,7 +407,7 @@ function defaultFaceTexture(female: boolean, skinHex: string) {
 
 /** Tapered limb (human arm/leg) instead of a toy capsule. */
 function taper(rTop: number, rBot: number, len: number, segs = 28) {
-  return new THREE.CylinderGeometry(rTop, rBot, len, segs, 6);
+  return new THREE.CylinderGeometry(rTop, rBot, len, segs, 12);
 }
 
 function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean, faceTex: THREE.CanvasTexture | null) {
@@ -406,29 +424,33 @@ function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean, faceTex: T
   else limb *= 1.04;
 
   // Torso cross-sections straight from the tape measurements, so the mesh is real-size.
-  const sh = clamp(shape.chest / BASE.chest / sxz, 0.72, 1.6);
-  const wa = clamp(shape.waist / BASE.waist / sxz, 0.7, 1.75);
-  const hp = clamp(shape.hips / BASE.hips / sxz, 0.72, 1.6);
+  const chest = Number.isFinite(shape.chest) ? shape.chest : BASE.chest;
+  const waist = Number.isFinite(shape.waist) ? shape.waist : BASE.waist;
+  const hips = Number.isFinite(shape.hips) ? shape.hips : BASE.hips;
+  const sh = clamp(chest / BASE.chest / sxz, 0.72, 1.6);
+  const wa = clamp(waist / BASE.waist / sxz, 0.7, 1.75);
+  const hp = clamp(hips / BASE.hips / sxz, 0.72, 1.6);
   const shBase = female ? 0.168 : 0.198;
   const shX = shape.shoulder
     ? clamp(shape.shoulder / 200 / sxz - 0.055 * limb, 0.14, 0.25)
     : shBase * clamp((sh * 2 + wf) / 3, 0.8, 1.35);
   const legK = shape.legRatio ? clamp(shape.legRatio / 0.52, 0.9, 1.1) : 1;
 
-  const skinHex = shape.skin ?? (female ? '#D4A88A' : '#C99574');
+  // Meta / Instagram avatar palette — smooth stylized skin
+  const skinHex = shape.skin ?? (female ? '#E8C4A8' : '#E0B896');
   const skinMap = skinTexture(skinHex);
   const skin = new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(skinHex),
     map: skinMap,
     bumpMap: skinMap,
-    bumpScale: 0.35,
-    roughness: 0.52,
+    bumpScale: 0.12,
+    roughness: 0.42,
     metalness: 0,
-    sheen: 0.55,
-    sheenRoughness: 0.65,
-    sheenColor: new THREE.Color(0xffe8d8),
-    clearcoat: 0.12,
-    clearcoatRoughness: 0.7,
+    sheen: 0.65,
+    sheenRoughness: 0.5,
+    sheenColor: new THREE.Color(0xffe6d4),
+    clearcoat: 0.22,
+    clearcoatRoughness: 0.55,
   });
 
   const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z = 0) => {
@@ -440,17 +462,17 @@ function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean, faceTex: T
     return m;
   };
 
-  // Gendered silhouette: women = narrower shoulders + cinched waist + fuller hips; men = broader chest.
+  // Slim stylized Meta-avatar silhouette
   const profile: [number, number][] = female
     ? [
-        [0.001, 0.84], [0.162 * hp, 0.86], [0.178 * hp, 0.93], [0.138 * wa, 1.04], [0.128 * wa, 1.12],
-        [0.148 * wa, 1.2], [0.175 * sh, 1.28], [0.182 * sh, 1.34], [0.168 * sh, 1.38], [0.105, 1.44], [0.048, 1.48], [0.001, 1.48],
+        [0.001, 0.84], [0.155 * hp, 0.86], [0.168 * hp, 0.93], [0.125 * wa, 1.04], [0.118 * wa, 1.12],
+        [0.14 * wa, 1.2], [0.165 * sh, 1.28], [0.172 * sh, 1.34], [0.155 * sh, 1.39], [0.095, 1.45], [0.042, 1.49], [0.001, 1.49],
       ]
     : [
-        [0.001, 0.84], [0.142 * hp, 0.86], [0.155 * hp, 0.93], [0.152 * wa, 1.03], [0.148 * wa, 1.11],
-        [0.162 * wa, 1.19], [0.188 * sh, 1.3], [0.195 * sh, 1.37], [0.118, 1.43], [0.05, 1.47], [0.001, 1.47],
+        [0.001, 0.84], [0.132 * hp, 0.86], [0.145 * hp, 0.93], [0.14 * wa, 1.03], [0.138 * wa, 1.11],
+        [0.152 * wa, 1.19], [0.175 * sh, 1.3], [0.182 * sh, 1.37], [0.11, 1.44], [0.045, 1.48], [0.001, 1.48],
       ];
-  const DEPTH = female ? 0.72 : 0.76;
+  const DEPTH = female ? 0.7 : 0.72;
   const radiusAt = (y: number) => {
     for (let i = 1; i < profile.length; i++) {
       const [r1, y1] = profile[i];
@@ -461,94 +483,135 @@ function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean, faceTex: T
   };
   const front = (y: number, inf: number) => radiusAt(y) * DEPTH + inf + 0.002;
 
-  const torsoProfile = (inf: number, from = 0.84, to = 1.48, soft = false) => {
+  const torsoProfile = (inf: number, from = 0.84, to = 1.49, soft = false) => {
     const list = profile
       .filter(([, y]) => y >= from - 0.001 && y <= to + 0.001)
       .map(([r, y]) => new THREE.Vector2(r + (r > 0.01 ? inf : 0), y));
     const geo = new THREE.LatheGeometry(list, 80);
     geo.scale(1, 1, DEPTH);
-    if (soft) wrinkle(geo, 0.004);
+    if (soft) wrinkle(geo, 0.0035);
     return geo;
   };
 
-  // —— Human body (anatomical, not toy capsules) ——
-  const headY = female ? 1.6 : 1.61;
-  const headR = female ? 0.1 : 0.108;
+  // —— Meta / Instagram stylized human ——
+  const headY = female ? 1.61 : 1.62;
+  const headR = female ? 0.112 : 0.118; // Meta-avatar head (slightly large, not chibi)
   const head = add(new THREE.SphereGeometry(headR, 64, 48), skin, 0, headY);
-  head.scale.set(female ? 0.9 : 0.92, female ? 1.1 : 1.14, female ? 0.94 : 0.97);
-  // neck
-  add(taper(female ? 0.036 : 0.042, female ? 0.05 : 0.058, 0.12, 36), skin, 0, headY - 0.115);
-  // jaw
-  add(new THREE.SphereGeometry(headR * 0.78, 32, 24), skin, 0, headY - 0.04, 0.012).scale.set(1.02, 0.62, 0.88);
-  // ears
+  head.scale.set(female ? 0.92 : 0.94, female ? 1.06 : 1.08, female ? 0.93 : 0.95);
+  add(taper(female ? 0.034 : 0.04, female ? 0.048 : 0.055, 0.11, 36), skin, 0, headY - 0.125);
+  add(new THREE.SphereGeometry(headR * 0.72, 32, 24), skin, 0, headY - 0.045, 0.015).scale.set(1.05, 0.58, 0.9);
   [-1, 1].forEach((s) => {
-    const ear = add(new THREE.SphereGeometry(0.022, 16, 12), skin, s * headR * 0.92, headY, 0);
-    ear.scale.set(0.45, 1.15, 0.7);
+    const ear = add(new THREE.SphereGeometry(0.024, 16, 12), skin, s * headR * 0.9, headY - 0.005, -0.01);
+    ear.scale.set(0.4, 1.1, 0.65);
   });
-  // nose bridge
-  add(new THREE.SphereGeometry(0.018, 16, 12), skin, 0, headY - 0.01, headR * 0.85).scale.set(0.7, 1.3, 1.1);
+  // nose
+  const nose = add(new THREE.SphereGeometry(0.02, 16, 12), skin, 0, headY - 0.005, headR * 0.88);
+  nose.scale.set(0.65, 1.15, 1.05);
 
   add(torsoProfile(0), skin, 0, 0);
   if (female) {
     [-1, 1].forEach((s) => {
-      const bust = add(new THREE.SphereGeometry(0.058 * sh, 32, 24), skin, s * 0.058 * sh, 1.3, 0.05 * DEPTH);
-      bust.scale.set(0.95, 0.82, 0.78);
+      const bust = add(new THREE.SphereGeometry(0.055 * sh, 32, 24), skin, s * 0.055 * sh, 1.3, 0.048 * DEPTH);
+      bust.scale.set(0.95, 0.8, 0.75);
     });
   }
 
-  // hair
-  const hairCol = new THREE.Color(female ? '#2a1a12' : '#1c1410');
-  const hair = new THREE.MeshPhysicalMaterial({ color: hairCol, roughness: 0.72, sheen: 0.4, sheenColor: hairCol.clone().offsetHSL(0, 0, 0.2) });
-  const hairCap = add(new THREE.SphereGeometry(headR * 1.05, 40, 24, 0, Math.PI * 2, 0, Math.PI * 0.58), hair, 0, headY + 0.01, -0.01);
-  hairCap.scale.copy(head.scale);
-  if (female) {
-    [-1, 1].forEach((s) => {
-      const side = add(new THREE.SphereGeometry(0.055, 24, 16), hair, s * 0.07, headY - 0.02, -0.02);
-      side.scale.set(0.7, 1.35, 0.85);
-    });
-  }
-
-  const armAng = female ? 0.09 : 0.12;
+  // 3D eyes (Meta avatar signature)
+  const eyeWhite = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 });
+  const irisMat = new THREE.MeshStandardMaterial({ color: female ? 0x4a6b58 : 0x3a4a5c, roughness: 0.4 });
+  const pupilMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 });
+  const highlight = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, emissive: 0xffffff, emissiveIntensity: 0.15 });
   [-1, 1].forEach((s) => {
-    const shoulder = add(new THREE.SphereGeometry((female ? 0.046 : 0.054) * limb, 40, 28), skin, s * shX, 1.385);
-    shoulder.scale.set(1.08, 0.86, 1.02);
-    // upper arm — tapered (slimmer = less toy-like)
-    const up = add(taper((female ? 0.034 : 0.042) * limb, (female ? 0.028 : 0.034) * limb, 0.26, 32), skin, s * (shX + 0.02), 1.22);
-    up.rotation.z = s * armAng;
-    // forearm
-    const lo = add(taper((female ? 0.028 : 0.033) * limb, (female ? 0.022 : 0.026) * limb, 0.24, 32), skin, s * (shX + 0.048), 0.95);
-    lo.rotation.z = s * (armAng * 0.6);
-    // hand
-    const hand = add(new THREE.SphereGeometry(female ? 0.028 : 0.034, 24, 16), skin, s * (shX + 0.058), 0.8);
-    hand.scale.set(0.65, 1.15, 0.45);
-    // thigh
-    add(taper((female ? 0.062 : 0.07) * hp, (female ? 0.048 : 0.054) * hp, 0.38, 36), skin, s * 0.08 * hp, 0.62);
-    // shin
-    add(taper((female ? 0.038 : 0.046) * limb, (female ? 0.028 : 0.034) * limb, 0.36, 32), skin, s * 0.078 * hp, 0.26);
-    // foot
-    const foot = add(new THREE.BoxGeometry(female ? 0.07 : 0.082, 0.04, female ? 0.2 : 0.22), skin, s * 0.078 * hp, 0.025, 0.05);
-    foot.scale.set(1, 1, 1);
-    add(new THREE.SphereGeometry(female ? 0.028 : 0.032, 16, 12), skin, s * 0.078 * hp, 0.035, 0.13);
+    const ex = s * 0.038;
+    const ey = headY + 0.012;
+    const ez = headR * 0.78;
+    const white = add(new THREE.SphereGeometry(0.022, 24, 16), eyeWhite, ex, ey, ez);
+    white.scale.set(1.05, 0.85, 0.55);
+    add(new THREE.SphereGeometry(0.011, 16, 12), irisMat, ex, ey, ez + 0.012);
+    add(new THREE.SphereGeometry(0.0055, 12, 8), pupilMat, ex, ey, ez + 0.018);
+    add(new THREE.SphereGeometry(0.003, 8, 6), highlight, ex - 0.004, ey + 0.004, ez + 0.022);
+  });
+  // brows
+  const browMat = new THREE.MeshStandardMaterial({ color: 0x1a120e, roughness: 0.8 });
+  [-1, 1].forEach((s) => {
+    const brow = add(new THREE.BoxGeometry(0.04, 0.006, 0.008), browMat, s * 0.038, headY + 0.038, headR * 0.72);
+    brow.rotation.z = s * -0.12;
+  });
+  // lips
+  const lip = add(new THREE.SphereGeometry(0.018, 16, 10), new THREE.MeshStandardMaterial({ color: female ? 0xc45a6a : 0xb07070, roughness: 0.45 }), 0, headY - 0.048, headR * 0.8);
+  lip.scale.set(1.35, 0.45, 0.55);
+
+  // Face photo overlay (selfie) on top of stylized face
+  if (faceTex) {
+    const faceMat = new THREE.MeshStandardMaterial({ map: faceTex, transparent: true, roughness: 0.48, depthWrite: false });
+    const face = add(
+      new THREE.SphereGeometry(headR * 1.02, 48, 32, -Math.PI * 0.5, Math.PI, Math.PI * 0.28, Math.PI * 0.48),
+      faceMat, 0, headY, 0.006,
+    );
+    face.scale.copy(head.scale);
+    face.renderOrder = 3;
+  } else {
+    const faceMap = defaultFaceTexture(female, skinHex);
+    const faceMat = new THREE.MeshStandardMaterial({ map: faceMap, transparent: true, roughness: 0.5, depthWrite: false, opacity: 0.55 });
+    const face = add(
+      new THREE.SphereGeometry(headR * 1.01, 48, 32, -Math.PI * 0.5, Math.PI, Math.PI * 0.3, Math.PI * 0.45),
+      faceMat, 0, headY, 0.003,
+    );
+    face.scale.copy(head.scale);
+    face.renderOrder = 2;
+  }
+
+  // Short styled dark hair (like the Instagram avatar)
+  const hairCol = new THREE.Color(female ? '#1a1010' : '#141010');
+  const hair = new THREE.MeshPhysicalMaterial({
+    color: hairCol, roughness: 0.55, sheen: 0.55, sheenRoughness: 0.4,
+    sheenColor: new THREE.Color(0x4a3530), clearcoat: 0.15, clearcoatRoughness: 0.5,
+  });
+  const hairCap = add(new THREE.SphereGeometry(headR * 1.08, 48, 28, 0, Math.PI * 2, 0, Math.PI * 0.62), hair, 0, headY + 0.018, -0.015);
+  hairCap.scale.set(head.scale.x * 1.02, head.scale.y * 0.95, head.scale.z * 1.05);
+  // front volume / fringe
+  const fringe = add(new THREE.SphereGeometry(0.07, 28, 16), hair, 0, headY + 0.05, headR * 0.35);
+  fringe.scale.set(1.35, 0.55, 0.7);
+  // side volume
+  [-1, 1].forEach((s) => {
+    const side = add(new THREE.SphereGeometry(0.055, 24, 16), hair, s * headR * 0.72, headY + 0.01, -0.02);
+    side.scale.set(0.75, female ? 1.4 : 1.05, 0.9);
+  });
+  // back volume
+  const back = add(new THREE.SphereGeometry(0.08, 28, 16), hair, 0, headY - 0.01, -headR * 0.55);
+  back.scale.set(1.1, 0.9, 0.7);
+
+  // Hide skin under clothes so joints don't show through (Meta avatar look)
+  const slots = new Set(worn.map((w) => CATEGORY_SLOT[w.category]));
+  const coverArms = [...worn].some((w) => ['hoodie', 'jacket', 'suit', 'tshirt'].includes(w.category));
+  const coverLegs = slots.has('bottom') || slots.has('full');
+  const coverFeet = slots.has('shoes');
+  const longSleeves = worn.some((w) => ['hoodie', 'jacket', 'suit'].includes(w.category));
+
+  const armAng = female ? 0.07 : 0.1;
+  [-1, 1].forEach((s) => {
+    if (!longSleeves) {
+      const shoulder = add(new THREE.SphereGeometry((female ? 0.044 : 0.05) * limb, 40, 28), skin, s * shX, 1.39);
+      shoulder.scale.set(1.05, 0.85, 1);
+      const up = add(taper((female ? 0.032 : 0.038) * limb, (female ? 0.026 : 0.032) * limb, 0.26, 32), skin, s * (shX + 0.018), 1.22);
+      up.rotation.z = s * armAng;
+      const lo = add(taper((female ? 0.026 : 0.03) * limb, (female ? 0.02 : 0.024) * limb, 0.24, 32), skin, s * (shX + 0.042), 0.95);
+      lo.rotation.z = s * (armAng * 0.55);
+    }
+    const hand = add(new THREE.SphereGeometry(female ? 0.026 : 0.03, 24, 16), skin, s * (shX + 0.052), 0.8);
+    hand.scale.set(0.65, 1.1, 0.45);
+    if (!coverLegs) {
+      add(taper((female ? 0.058 : 0.064) * hp, (female ? 0.045 : 0.05) * hp, 0.38, 36), skin, s * 0.078 * hp, 0.62);
+      add(taper((female ? 0.036 : 0.042) * limb, (female ? 0.026 : 0.03) * limb, 0.36, 32), skin, s * 0.076 * hp, 0.26);
+    }
+    if (!coverFeet) {
+      add(new THREE.BoxGeometry(female ? 0.065 : 0.075, 0.038, female ? 0.19 : 0.21), skin, s * 0.076 * hp, 0.024, 0.048);
+      add(new THREE.SphereGeometry(female ? 0.026 : 0.03, 16, 12), skin, s * 0.076 * hp, 0.032, 0.125);
+    }
   });
 
-  // Face: selfie or painted default — always human, never blank sphere
-  const faceMap = faceTex ?? defaultFaceTexture(female, skinHex);
-  const faceMat = new THREE.MeshStandardMaterial({
-    map: faceMap,
-    transparent: true,
-    roughness: 0.5,
-    metalness: 0,
-    depthWrite: false,
-  });
-  const face = add(
-    new THREE.SphereGeometry(headR * 1.015, 56, 40, -Math.PI * 0.55, Math.PI * 1.1, Math.PI * 0.26, Math.PI * 0.52),
-    faceMat,
-    0,
-    headY,
-    0.004,
-  );
-  face.scale.copy(head.scale);
-  face.renderOrder = 2;
+  // Slight three-quarter turn like the Instagram avatar
+  g.rotation.y = -0.32;
 
   // garments
   const matFor = (w: Worn, tone = 0, fabric = fabricOf(w)) => {
@@ -583,20 +646,20 @@ function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean, faceTex: T
 
   const sleeve = (w: Worn, m: THREE.Material, inf: number, kind: 'long' | 'short', cuffs: boolean) => {
     [-1, 1].forEach((s) => {
-      add(new THREE.SphereGeometry((female ? 0.048 : 0.054) * limb + inf + 0.003, 36, 24), m, s * shX, 1.38);
+      add(new THREE.SphereGeometry((female ? 0.045 : 0.05) * limb + inf + 0.003, 36, 24), m, s * shX, 1.39);
       const upLen = kind === 'long' ? 0.26 : 0.11;
       const up = add(
-        taper((female ? 0.036 : 0.044) * limb + inf + 0.004, (female ? 0.03 : 0.036) * limb + inf + 0.004, upLen, 32),
+        taper((female ? 0.034 : 0.04) * limb + inf + 0.004, (female ? 0.028 : 0.034) * limb + inf + 0.004, upLen, 32),
         m,
-        s * (shX + 0.02),
+        s * (shX + 0.018),
         kind === 'long' ? 1.22 : 1.3,
       );
       up.rotation.z = s * armAng;
       if (kind === 'long') {
         const lo = add(
-          taper((female ? 0.03 : 0.035) * limb + inf + 0.004, (female ? 0.025 : 0.03) * limb + inf + 0.004, 0.22, 32),
+          taper((female ? 0.028 : 0.032) * limb + inf + 0.004, (female ? 0.022 : 0.026) * limb + inf + 0.004, 0.22, 32),
           m,
-          s * (shX + 0.05),
+          s * (shX + 0.042),
           0.96,
         );
         lo.rotation.z = s * armAng * 0.6;
@@ -705,16 +768,18 @@ function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean, faceTex: T
       }
     } else if (w.category === 'suit') {
       dressBottom(w, 'slim');
-      const { inf } = dressTop(w, 'long', 0.8);
-      add(new THREE.BoxGeometry(0.07, 0.2, 0.01), plain(0xf4f3ef, 0.5), 0, 1.33, front(1.33, inf) + 0.004).rotation.x = -0.12;
-      add(new THREE.BoxGeometry(0.025, 0.2, 0.012), plain(heatmap ? 0x333333 : 0x7b1e2c, 0.35), 0, 1.3, front(1.3, inf) + 0.012).rotation.x = -0.1;
+      // Longer jacket so it overlaps trousers (no skin gap at waist)
+      const { inf } = dressTop(w, 'long', 0.78);
+      add(new THREE.BoxGeometry(0.075, 0.22, 0.012), plain(0xf7f5f1, 0.45), 0, 1.34, front(1.34, inf) + 0.005).rotation.x = -0.1;
+      const tieHex = w.color === 'black' || w.color === 'navy' || w.color === 'grey' ? 0x1a1a1a : 0x7b1e2c;
+      add(new THREE.BoxGeometry(0.028, 0.22, 0.014), plain(heatmap ? 0x333333 : tieHex, 0.35), 0, 1.3, front(1.3, inf) + 0.014).rotation.x = -0.08;
       [-1, 1].forEach((s) => {
-        const lap = add(new THREE.BoxGeometry(0.055, 0.24, 0.008), matFor(w, -0.06), s * 0.056, 1.28, front(1.28, inf) + 0.008);
-        lap.rotation.z = s * 0.34;
-        add(new THREE.BoxGeometry(0.08, 0.016, 0.008), matFor(w, -0.06), s * 0.09, 0.98, front(0.98, inf) + 0.004);
+        const lap = add(new THREE.BoxGeometry(0.058, 0.26, 0.01), matFor(w, -0.06), s * 0.055, 1.29, front(1.29, inf) + 0.01);
+        lap.rotation.z = s * 0.32;
+        add(new THREE.BoxGeometry(0.085, 0.018, 0.01), matFor(w, -0.05), s * 0.09, 0.96, front(0.96, inf) + 0.005);
       });
-      add(new THREE.BoxGeometry(0.045, 0.02, 0.006), plain(0xffffff, 0.5), 0.085, 1.27, front(1.27, inf) + 0.006);
-      [1.1, 1.0].forEach((y) => add(new THREE.CylinderGeometry(0.009, 0.009, 0.006, 16), plain(0x111111, 0.3), 0, y, front(y, inf) + 0.006).rotation.x = Math.PI / 2);
+      add(new THREE.BoxGeometry(0.05, 0.022, 0.007), plain(0xffffff, 0.5), 0.09, 1.28, front(1.28, inf) + 0.008);
+      [1.12, 1.02, 0.92].forEach((y) => add(new THREE.CylinderGeometry(0.009, 0.009, 0.006, 16), plain(0x111111, 0.3), 0, y, front(y, inf) + 0.007).rotation.x = Math.PI / 2);
     } else if (w.category === 'dress') {
       const m = matFor(w);
       dressTop(w, 'none', 0.99);
