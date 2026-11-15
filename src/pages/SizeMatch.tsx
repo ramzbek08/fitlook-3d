@@ -69,7 +69,21 @@ export default function SizeMatch() {
     <label className="field">
       <span>{label}</span>
       <div className="input-unit">
-        <input className="input" type="number" min={min} max={max} value={m[k] as number} onChange={(e) => set(k, Number(e.target.value))} />
+        <input
+          className="input"
+          type="number"
+          inputMode="decimal"
+          min={min}
+          max={max}
+          value={Number.isFinite(m[k] as number) ? (m[k] as number) : ''}
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (raw === '') return;
+            const n = Number(raw);
+            if (!Number.isFinite(n)) return;
+            set(k, Math.min(max, Math.max(min, n)));
+          }}
+        />
         <em>{unit}</em>
       </div>
       {hint && <small className="muted">{hint}</small>}
@@ -186,9 +200,9 @@ export default function SizeMatch() {
             </div>
           </div>
 
-          <div className="row between mt">
+          <div className="row between mt size-measure-head">
             <h3>2. Tana o‘lchamlari</h3>
-            <button className="btn sm ghost" onClick={auto}><Icon name="spark" size={16} /> Bilmayman — AI hisoblasin</button>
+            <button className="btn sm ghost" onClick={auto}><Icon name="spark" size={16} /> AI hisoblasin</button>
           </div>
           <div className="form2">
             {num('chest', 'Ko‘krak aylanasi', 'sm', 60, 150, 'Eng keng joyidan')}

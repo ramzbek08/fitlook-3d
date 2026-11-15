@@ -131,7 +131,13 @@ export default function Avatar3D({ shape, worn, heatmap = false, autoRotate = tr
       const h = el.clientHeight || 1;
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
+      // Phone: slightly wider FOV so full body fits in short stages
+      camera.fov = w < 520 || h < 420 ? 34 : 28;
       camera.updateProjectionMatrix();
+      if (w < 520) {
+        controls.minDistance = 1.8;
+        controls.maxDistance = 6.2;
+      }
     };
     const ro = new ResizeObserver(resize);
     ro.observe(el);

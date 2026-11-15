@@ -78,7 +78,10 @@ export default function Fitting() {
             <small>Umumiy moslik</small>
             <b>{lines.length ? avgFit + '%' : '—'}</b>
           </div>
-          <p className="stage-hint">Sichqoncha bilan aylantiring, g‘ildirak bilan yaqinlashtiring</p>
+          <p className="stage-hint">
+            <span className="hint-desk">Sichqoncha bilan aylantiring, g‘ildirak bilan yaqinlashtiring</span>
+            <span className="hint-mob">Barmoq bilan aylantiring, pinch bilan yaqinlashtiring</span>
+          </p>
         </div>
 
         <div className="fit-panel">
