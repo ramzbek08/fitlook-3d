@@ -218,7 +218,7 @@ function fabricTexture(kind: Fabric) {
         // High contrast so weave reads through the garment colour (not flat plastic).
         case 'knit': v = 120 + (x % 4 < 2 ? 95 : 0) + n * 28 + Math.sin(y * 0.4) * 8; break;
         case 'denim': v = ((x + y) % 6 < 3 ? 210 : 120) + n * 28 + (n > 0.98 ? 40 : 0); break;
-        case 'wool': v = 130 + (((x >> 2) + ((y >> 3) % 2 ? y : -y)) % 4 < 2 ? 70 : 0) + n * 30; break;
+        case 'wool': v = 175 + n * 45 + Math.sin(x * 0.35) * 8 + Math.cos(y * 0.4) * 8; break;
         case 'nylon': v = 200 - (x % 14 === 0 || y % 14 === 0 ? 55 : 0) + n * 18; break;
         case 'satin': v = 200 + n * 40 + Math.sin((x + y) * 0.15) * 20; break;
         case 'linen': v = 125 + (x % 3 === 0 ? 55 : 0) + (y % 3 === 0 ? 40 : 0) + n * 35; break;
@@ -244,7 +244,7 @@ function fabricTexture(kind: Fabric) {
 const FABRIC_LOOK: Record<Fabric, { roughness: number; sheen: number; clearcoat?: number; bump: number }> = {
   knit: { roughness: 0.88, sheen: 0.55, bump: 1.35 },
   denim: { roughness: 0.82, sheen: 0.25, bump: 1.6 },
-  wool: { roughness: 0.68, sheen: 0.55, bump: 0.55 },
+  wool: { roughness: 0.62, sheen: 0.6, bump: 0.2 },
   nylon: { roughness: 0.38, sheen: 0.15, clearcoat: 0.35, bump: 0.55 },
   satin: { roughness: 0.22, sheen: 1, clearcoat: 0.45, bump: 0.15 },
   linen: { roughness: 0.86, sheen: 0.4, bump: 1.45 },
