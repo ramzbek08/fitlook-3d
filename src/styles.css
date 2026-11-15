@@ -210,8 +210,8 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; }
 .hero-stats { display: flex; gap: 36px; margin-top: 40px; }
 .hero-stats b { display: block; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
 .hero-stats span { color: var(--muted); font-size: 14px; }
-.hero-stage { position: relative; height: 600px; border-radius: 32px; background: radial-gradient(120% 80% at 50% 30%, #ffffff 0%, #eceef5 60%, #e3e6ef 100%); overflow: hidden; }
-.avatar3d { width: 100%; height: 100%; min-height: 300px; cursor: grab; }
+.hero-stage { position: relative; height: 600px; border-radius: 32px; background: #ffffff; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+.avatar3d { width: 100%; height: 100%; min-height: 300px; cursor: grab; background: #ffffff; }
 .avatar3d:active { cursor: grabbing; }
 .avatar3d canvas { display: block; width: 100% !important; height: 100% !important; }
 .float { position: absolute; background: #fff; border-radius: 16px; padding: 12px 16px; box-shadow: 0 12px 32px rgba(14,15,18,.1); display: flex; flex-direction: column; font-size: 13px; pointer-events: none; }
@@ -407,7 +407,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; }
 
 /* fitting room */
 .fit-layout { display: grid; grid-template-columns: 1.25fr 1fr; gap: 24px; align-items: start; }
-.fit-stage { position: sticky; top: 90px; height: calc(100vh - 120px); min-height: 560px; border-radius: 28px; background: radial-gradient(120% 80% at 50% 30%, #fff 0%, #eceef5 60%, #e1e4ee 100%); overflow: hidden; }
+.fit-stage { position: sticky; top: 90px; height: calc(100vh - 120px); min-height: 560px; border-radius: 28px; background: #ffffff; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
 .fit-stage-top { position: absolute; z-index: 2; top: 0; left: 0; right: 0; padding: 22px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; pointer-events: none; }
 .fit-stage-top > * { pointer-events: auto; }
 .tog { height: 36px; padding: 0 12px; border-radius: 10px; background: #fff; box-shadow: var(--sh); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
@@ -447,7 +447,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; }
 
 /* size */
 .size-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: start; }
-.size-preview { padding: 0; overflow: hidden; height: 600px; display: flex; flex-direction: column; background: radial-gradient(120% 80% at 50% 30%, #fff, #e6e9f1); }
+.size-preview { padding: 0; overflow: hidden; height: 600px; display: flex; flex-direction: column; background: #ffffff; }
 .size-preview .avatar3d { flex: 1; }
 .size-sum { display: grid; grid-template-columns: repeat(4, 1fr); background: #fff; }
 .size-sum div { padding: 14px; text-align: center; border-right: 1px solid var(--line); }
@@ -545,7 +545,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; }
 .link-card { display: flex; flex-direction: column; gap: 4px; padding: 18px; color: var(--coral); }
 .link-card b { color: var(--ink); font-size: 14px; }
 .link-card span { color: var(--ink); font-size: 18px; font-weight: 800; }
-.profile-avatar { position: sticky; top: 90px; height: 600px; display: flex; flex-direction: column; gap: 12px; background: radial-gradient(120% 80% at 50% 30%, #fff, #e6e9f1); }
+.profile-avatar { position: sticky; top: 90px; height: 600px; display: flex; flex-direction: column; gap: 12px; background: #ffffff; box-shadow: inset 0 0 0 1px var(--line); }
 .profile-avatar .avatar3d { flex: 1; }
 .alert-line { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
 .alert-line small { display: block; }
@@ -692,7 +692,7 @@ textarea.input { height: auto; padding: 12px 14px; resize: vertical; }
 
 /* cart: try everything on */
 .tryon { display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px; margin-bottom: 24px; padding: 0; overflow: hidden; }
-.tryon-stage { position: relative; min-height: 560px; background: radial-gradient(120% 80% at 50% 30%, #fff 0%, #eceef5 60%, #e1e4ee 100%); }
+.tryon-stage { position: relative; min-height: 560px; background: #ffffff; }
 .tryon-stage .avatar3d { position: absolute; inset: 0; }
 .tryon-tools { position: absolute; z-index: 2; top: 16px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; pointer-events: none; }
 .tryon-tools > * { pointer-events: auto; }
