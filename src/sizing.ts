@@ -1,12 +1,18 @@
 import { CATEGORY_SLOT, CLOTH_SIZES, STORE_BY_ID, type Product } from './data';
 
 export type BodyType = 'ingichka' | 'ortacha' | 'sportcha' | 'tola';
+export type Gender = 'male' | 'female';
 
 export const BODY_LABEL: Record<BodyType, string> = {
   ingichka: 'Ingichka',
   ortacha: 'O‘rtacha',
   sportcha: 'Sportcha',
   tola: 'To‘la',
+};
+
+export const GENDER_LABEL: Record<Gender, string> = {
+  male: 'Erkak',
+  female: 'Ayol',
 };
 
 export interface Measurements {
@@ -37,14 +43,18 @@ export interface BodyShape {
   chest: number;
   waist: number;
   hips: number;
+  gender: Gender;
+  facePhoto?: string;
   shoulder?: number;
   legRatio?: number;
   skin?: string;
 }
 
-export function shapeOf(m: Measurements & { scan?: BodyScan }): BodyShape {
+export function shapeOf(m: Measurements & { scan?: BodyScan; gender?: Gender; facePhoto?: string }): BodyShape {
   return {
     height: m.height, weight: m.weight, body: m.body, chest: m.chest, waist: m.waist, hips: m.hips,
+    gender: m.gender ?? 'male',
+    facePhoto: m.facePhoto,
     shoulder: m.scan?.shoulder, legRatio: m.scan?.legRatio, skin: m.scan?.skin,
   };
 }
@@ -53,10 +63,12 @@ const CHEST = [84, 88, 93, 99, 105, 111];
 const WAIST = [66, 70, 75, 81, 87, 93];
 const HIPS = [88, 92, 98, 104, 110, 116];
 
-export function estimate(height: number, weight: number, body: BodyType) {
+export function estimate(height: number, weight: number, body: BodyType, gender: Gender = 'male') {
   let chest = 40 + 0.5 * weight + 0.115 * height;
   let waist = 22 + 0.8 * weight;
   let hips = 10 + 0.55 * weight + 0.3 * height;
+  if (gender === 'female') { chest -= 5; waist -= 3; hips += 5; }
+  else { chest += 3; waist += 1; hips -= 2; }
   if (body === 'ingichka') { chest -= 3; waist -= 3; hips -= 2; }
   if (body === 'tola') { chest += 4; waist += 6; hips += 4; }
   if (body === 'sportcha') { chest += 4; waist -= 3; }
@@ -64,7 +76,7 @@ export function estimate(height: number, weight: number, body: BodyType) {
     chest: Math.round(chest),
     waist: Math.round(waist),
     hips: Math.round(hips),
-    shoe: Math.max(36, Math.min(46, Math.round(height * 0.247))),
+    shoe: Math.max(36, Math.min(46, Math.round(height * (gender === 'female' ? 0.235 : 0.247)))),
   };
 }
 

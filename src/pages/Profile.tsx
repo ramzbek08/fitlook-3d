@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar3D from '../components/Avatar3D';
 import { Icon } from '../components/Icon';
 import { PageHead, useWorn } from '../components/ui';
 import { fmt } from '../data';
-import { BODY_LABEL, shapeOf } from '../sizing';
+import { readFaceFile } from '../facePhoto';
+import { BODY_LABEL, estimate, GENDER_LABEL, shapeOf, type Gender } from '../sizing';
 import { toast, useStore } from '../store';
 
 export default function Profile() {
@@ -17,8 +18,26 @@ export default function Profile() {
   const worn = useWorn(outfit);
   const [name, setName] = useState(profile.name);
   const [phone, setPhone] = useState(profile.phone);
+  const faceRef = useRef<HTMLInputElement>(null);
 
   const spent = orders.filter((o) => !o.cancelled).reduce((a, o) => a + o.total, 0);
+
+  const setGender = (gender: Gender) => {
+    updateProfile({
+      gender,
+      ...(profile.measured ? {} : estimate(profile.height, profile.weight, profile.body, gender)),
+    });
+  };
+
+  const onFace = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      updateProfile({ facePhoto: await readFaceFile(file) });
+      toast('Yuzingiz 3D modelga qo‘yildi');
+    } catch {
+      toast('Rasmni yuklab bo‘lmadi');
+    }
+  };
 
   return (
     <div className="wrap page">
@@ -31,7 +50,24 @@ export default function Profile() {
               <label className="field"><span>Ism</span><input className="input" value={name} onChange={(e) => setName(e.target.value)} /></label>
               <label className="field"><span>Telefon</span><input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998" /></label>
             </div>
-            <button className="btn ink" onClick={() => { updateProfile({ name: name.trim(), phone: phone.trim() }); toast('Saqlandi'); }}>Saqlash</button>
+            <div className="chips gender-chips mt-s">
+              {(Object.keys(GENDER_LABEL) as Gender[]).map((g) => (
+                <button key={g} className={'chip' + (profile.gender === g ? ' on' : '')} onClick={() => setGender(g)}>{GENDER_LABEL[g]} 3D</button>
+              ))}
+            </div>
+            <div className="face-upload mt-s">
+              {profile.facePhoto ? <img src={profile.facePhoto} alt="" className="face-preview" /> : <div className="face-preview empty"><Icon name="user" size={22} /></div>}
+              <div className="grow">
+                <b>3D yuz</b>
+                <p className="muted small">Selfie yuklang — maneken yuzi siznikiga o‘xshaydi</p>
+                <div className="row gap-s mt-xs wrap-row">
+                  <button className="btn sm ghost" onClick={() => faceRef.current?.click()}><Icon name="spark" size={14} /> Rasm yuklash</button>
+                  {profile.facePhoto && <button className="link small" onClick={() => updateProfile({ facePhoto: undefined })}>O‘chirish</button>}
+                </div>
+              </div>
+              <input ref={faceRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => { onFace(e.target.files?.[0]); e.target.value = ''; }} />
+            </div>
+            <button className="btn ink mt-s" onClick={() => { updateProfile({ name: name.trim(), phone: phone.trim() }); toast('Saqlandi'); }}>Saqlash</button>
           </section>
 
           <section className="card">
@@ -41,6 +77,7 @@ export default function Profile() {
             </div>
             {!profile.measured && <p className="warn-note"><Icon name="spark" size={14} /> O‘lchamlar AI tomonidan taxmin qilingan. Aniqroq natija uchun o‘lchab kiriting.</p>}
             <div className="metrics">
+              <div><small>Jins</small><b>{GENDER_LABEL[profile.gender ?? 'male']}</b></div>
               <div><small>Bo‘y</small><b>{profile.height} sm</b></div>
               <div><small>Vazn</small><b>{profile.weight} kg</b></div>
               <div><small>Tana</small><b>{BODY_LABEL[profile.body]}</b></div>

@@ -23,7 +23,8 @@ interface Props {
 }
 
 const HEAT: Record<FitState, string> = { tight: '#FF4D4D', good: '#22C55E', loose: '#3B82F6' };
-const INFLATE: Record<FitState, number> = { tight: 0.004, good: 0.013, loose: 0.03 };
+/** Thinner clothing layers so garments hug the body instead of looking inflated / toy-like. */
+const INFLATE: Record<FitState, number> = { tight: 0.0025, good: 0.008, loose: 0.02 };
 
 /** Body the base mesh was modelled for (cm). Measurements are applied relative to it. */
 const BASE = { height: 172, chest: 92, waist: 74, hips: 97 };
@@ -133,13 +134,19 @@ export default function Avatar3D({ shape, worn, heatmap = false, autoRotate = tr
   useEffect(() => {
     const c = ctx.current;
     if (!c) return;
-    if (c.model) {
-      c.scene.remove(c.model);
-      disposeTree(c.model);
-    }
-    c.model = buildModel(shape, worn, heatmap);
-    c.scene.add(c.model);
-    c.controls.target.set(0, (shape.height / 100) * 0.52, 0);
+    let cancelled = false;
+    (async () => {
+      const face = shape.facePhoto ? await loadFaceTexture(shape.facePhoto).catch(() => null) : null;
+      if (cancelled || !ctx.current) return;
+      if (c.model) {
+        c.scene.remove(c.model);
+        disposeTree(c.model);
+      }
+      c.model = buildModel(shape, worn, heatmap, face);
+      c.scene.add(c.model);
+      c.controls.target.set(0, (shape.height / 100) * 0.52, 0);
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
@@ -251,27 +258,86 @@ function fabricOf(w: Worn): Fabric {
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
-function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean) {
+/** Soft-masked selfie texture for the avatar face. */
+function loadFaceTexture(dataUrl: string): Promise<THREE.CanvasTexture> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const S = 512;
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = S;
+      const g = cv.getContext('2d')!;
+      const scale = Math.max(S / img.width, S / img.height) * 1.08;
+      const w = img.width * scale;
+      const h = img.height * scale;
+      g.drawImage(img, (S - w) / 2, (S - h) / 2 - h * 0.04, w, h);
+      g.globalCompositeOperation = 'destination-in';
+      const grd = g.createRadialGradient(S / 2, S * 0.48, S * 0.22, S / 2, S * 0.5, S * 0.48);
+      grd.addColorStop(0, '#000');
+      grd.addColorStop(0.72, '#000');
+      grd.addColorStop(1, 'transparent');
+      g.fillStyle = grd;
+      g.fillRect(0, 0, S, S);
+      const t = new THREE.CanvasTexture(cv);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 4;
+      resolve(t);
+    };
+    img.onerror = () => reject(new Error('face'));
+    img.src = dataUrl;
+  });
+}
+
+/** Gentle fabric folds so clothes don't look like plastic capsules. */
+function wrinkle(geo: THREE.BufferGeometry, amount = 0.0035) {
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const len = Math.hypot(x, z) || 1;
+    const n = Math.sin(y * 26 + x * 38) * Math.cos(z * 20 + y * 14) * amount;
+    pos.setXYZ(i, x + (x / len) * n, y + Math.sin(x * 30 + z * 18) * amount * 0.25, z + (z / len) * n);
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean, faceTex: THREE.CanvasTexture | null) {
   const g = new THREE.Group();
   const { height, weight, body } = shape;
+  const female = shape.gender === 'female';
   const bmi = weight / (height / 100) ** 2;
   const wf = clamp(bmi / 22.5, 0.78, 1.45);
   const sxz = Math.sqrt(height / BASE.height);
   let limb = Math.sqrt(wf) / Math.sqrt(sxz);
   if (body === 'sportcha') limb *= 1.06;
   if (body === 'ingichka') limb *= 0.96;
+  if (female) limb *= 0.92;
+  else limb *= 1.04;
 
   // Torso cross-sections straight from the tape measurements, so the mesh is real-size.
   const sh = clamp(shape.chest / BASE.chest / sxz, 0.72, 1.6);
   const wa = clamp(shape.waist / BASE.waist / sxz, 0.7, 1.75);
   const hp = clamp(shape.hips / BASE.hips / sxz, 0.72, 1.6);
+  const shBase = female ? 0.168 : 0.198;
   const shX = shape.shoulder
-    ? clamp(shape.shoulder / 200 / sxz - 0.058 * limb, 0.15, 0.245)
-    : 0.185 * clamp((sh * 2 + wf) / 3, 0.8, 1.35);
+    ? clamp(shape.shoulder / 200 / sxz - 0.055 * limb, 0.14, 0.25)
+    : shBase * clamp((sh * 2 + wf) / 3, 0.8, 1.35);
   const legK = shape.legRatio ? clamp(shape.legRatio / 0.52, 0.9, 1.1) : 1;
 
-  const skinHex = shape.skin ?? '#ECE6DF';
-  const skin = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(skinHex), roughness: 0.55, sheen: 0.25, sheenRoughness: 0.8, sheenColor: new THREE.Color(0xffffff) });
+  const skinHex = shape.skin ?? (female ? '#E8D5C4' : '#E2D4C5');
+  const skin = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(skinHex),
+    roughness: 0.48,
+    metalness: 0,
+    sheen: 0.45,
+    sheenRoughness: 0.7,
+    sheenColor: new THREE.Color(0xffffff),
+    clearcoat: 0.06,
+    clearcoatRoughness: 0.85,
+  });
 
   const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z = 0) => {
     const m = new THREE.Mesh(geo, mat);
@@ -282,11 +348,17 @@ function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean) {
     return m;
   };
 
-  const profile: [number, number][] = [
-    [0.001, 0.84], [0.15 * hp, 0.86], [0.168 * hp, 0.93], [0.15 * wa, 1.03], [0.142 * wa, 1.1],
-    [0.155 * wa, 1.18], [0.172 * sh, 1.3], [0.178 * sh, 1.37], [0.12, 1.43], [0.05, 1.47], [0.001, 1.47],
-  ];
-  const DEPTH = 0.64;
+  // Gendered silhouette: women = narrower shoulders + cinched waist + fuller hips; men = broader chest.
+  const profile: [number, number][] = female
+    ? [
+        [0.001, 0.84], [0.162 * hp, 0.86], [0.178 * hp, 0.93], [0.138 * wa, 1.04], [0.128 * wa, 1.12],
+        [0.148 * wa, 1.2], [0.175 * sh, 1.28], [0.182 * sh, 1.34], [0.168 * sh, 1.38], [0.105, 1.44], [0.048, 1.48], [0.001, 1.48],
+      ]
+    : [
+        [0.001, 0.84], [0.142 * hp, 0.86], [0.155 * hp, 0.93], [0.152 * wa, 1.03], [0.148 * wa, 1.11],
+        [0.162 * wa, 1.19], [0.188 * sh, 1.3], [0.195 * sh, 1.37], [0.118, 1.43], [0.05, 1.47], [0.001, 1.47],
+      ];
+  const DEPTH = female ? 0.7 : 0.74;
   const radiusAt = (y: number) => {
     for (let i = 1; i < profile.length; i++) {
       const [r1, y1] = profile[i];
@@ -295,33 +367,60 @@ function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean) {
     }
     return 0.05;
   };
-  const front = (y: number, inf: number) => radiusAt(y) * DEPTH + inf + 0.003;
+  const front = (y: number, inf: number) => radiusAt(y) * DEPTH + inf + 0.002;
 
-  const torsoProfile = (inf: number, from = 0.84, to = 1.47) => {
+  const torsoProfile = (inf: number, from = 0.84, to = 1.48, soft = false) => {
     const list = profile
       .filter(([, y]) => y >= from - 0.001 && y <= to + 0.001)
       .map(([r, y]) => new THREE.Vector2(r + (r > 0.01 ? inf : 0), y));
-    const geo = new THREE.LatheGeometry(list, 64);
+    const geo = new THREE.LatheGeometry(list, 72);
     geo.scale(1, 1, DEPTH);
+    if (soft) wrinkle(geo, 0.0032);
     return geo;
   };
 
-  // mannequin
-  const head = add(new THREE.SphereGeometry(0.105, 48, 36), skin, 0, 1.6);
-  head.scale.set(0.9, 1.12, 0.96);
-  add(new THREE.CylinderGeometry(0.043, 0.05, 0.12, 32), skin, 0, 1.49);
+  // Human body (not a toy mannequin)
+  const headR = female ? 0.098 : 0.106;
+  const head = add(new THREE.SphereGeometry(headR, 56, 42), skin, 0, female ? 1.595 : 1.605);
+  head.scale.set(female ? 0.92 : 0.94, female ? 1.08 : 1.12, female ? 0.95 : 0.98);
+  add(new THREE.CylinderGeometry(female ? 0.038 : 0.045, female ? 0.048 : 0.055, 0.11, 36), skin, 0, female ? 1.485 : 1.49);
+  // Soft jaw / cheek volume
+  add(new THREE.SphereGeometry(headR * 0.72, 28, 20), skin, 0, female ? 1.56 : 1.565, 0.01).scale.set(1.05, 0.7, 0.85);
   add(torsoProfile(0), skin, 0, 0);
+  if (female) {
+    // Subtle bust volume
+    [-1, 1].forEach((s) => {
+      const bust = add(new THREE.SphereGeometry(0.055 * sh, 28, 20), skin, s * 0.055 * sh, 1.3, 0.045 * DEPTH);
+      bust.scale.set(0.95, 0.85, 0.75);
+    });
+  }
   [-1, 1].forEach((s) => {
-    add(new THREE.SphereGeometry(0.058 * limb, 32, 20), skin, s * shX, 1.38);
-    const up = add(new THREE.CapsuleGeometry(0.043 * limb, 0.24, 10, 24), skin, s * (shX + 0.025), 1.22);
-    up.rotation.z = s * 0.12;
-    const lo = add(new THREE.CapsuleGeometry(0.036 * limb, 0.22, 10, 24), skin, s * (shX + 0.055), 0.95);
-    lo.rotation.z = s * 0.08;
-    add(new THREE.SphereGeometry(0.042, 24, 16), skin, s * (shX + 0.068), 0.79).scale.set(0.8, 1.2, 0.6);
-    add(new THREE.CapsuleGeometry(0.072 * hp, 0.34, 10, 28), skin, s * 0.085 * hp, 0.62);
-    add(new THREE.CapsuleGeometry(0.052 * limb, 0.32, 10, 24), skin, s * 0.082 * hp, 0.27);
-    add(new THREE.BoxGeometry(0.085, 0.05, 0.2), skin, s * 0.082 * hp, 0.03, 0.04);
+    const shoulder = add(new THREE.SphereGeometry((female ? 0.052 : 0.06) * limb, 36, 24), skin, s * shX, 1.385);
+    shoulder.scale.set(1.05, 0.9, 1.05);
+    const up = add(new THREE.CapsuleGeometry((female ? 0.038 : 0.045) * limb, 0.25, 12, 28), skin, s * (shX + 0.022), 1.22);
+    up.rotation.z = s * (female ? 0.1 : 0.13);
+    const lo = add(new THREE.CapsuleGeometry((female ? 0.032 : 0.038) * limb, 0.23, 12, 28), skin, s * (shX + 0.05), 0.95);
+    lo.rotation.z = s * 0.07;
+    add(new THREE.SphereGeometry(female ? 0.036 : 0.042, 24, 16), skin, s * (shX + 0.062), 0.79).scale.set(0.75, 1.15, 0.55);
+    add(new THREE.CapsuleGeometry((female ? 0.068 : 0.074) * hp, 0.35, 12, 32), skin, s * 0.082 * hp, 0.62);
+    add(new THREE.CapsuleGeometry((female ? 0.045 : 0.054) * limb, 0.33, 12, 28), skin, s * 0.08 * hp, 0.27);
+    const foot = add(new THREE.BoxGeometry(female ? 0.075 : 0.088, 0.045, female ? 0.19 : 0.21), skin, s * 0.08 * hp, 0.028, 0.042);
+    foot.scale.set(1, 1, 1);
   });
+
+  // User face selfie mapped onto the front of the head
+  if (faceTex) {
+    const faceMat = new THREE.MeshStandardMaterial({
+      map: faceTex,
+      transparent: true,
+      roughness: 0.55,
+      metalness: 0,
+      depthWrite: false,
+    });
+    const face = add(new THREE.SphereGeometry(headR * 1.01, 48, 32, -Math.PI * 0.55, Math.PI * 1.1, Math.PI * 0.28, Math.PI * 0.5), faceMat, 0, female ? 1.595 : 1.605, 0.002);
+    face.scale.copy(head.scale);
+    face.renderOrder = 2;
+  }
 
   // garments
   const matFor = (w: Worn, tone = 0, fabric = fabricOf(w)) => {
@@ -376,7 +475,7 @@ function buildModel(shape: BodyShape, worn: Worn[], heatmap: boolean) {
   const dressTop = (w: Worn, sleeves: 'long' | 'short' | 'none', from = 0.84, cuffs = false) => {
     const inf = INFLATE[w.fit];
     const m = matFor(w);
-    add(torsoProfile(inf, from), m, 0, 0);
+    add(torsoProfile(inf, from, 1.48, !heatmap), m, 0, 0);
     if (sleeves !== 'none') sleeve(w, m, inf, sleeves, cuffs);
     return { m, inf };
   };

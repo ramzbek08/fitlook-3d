@@ -6,7 +6,7 @@ import { StoreEmblem } from '../components/StoreEmblem';
 import { PageHead } from '../components/ui';
 import { preloadScanner, ScanError, scanPhoto, type ScanOutput } from '../bodyScan';
 import { STORES, type Category, type Product } from '../data';
-import { BODY_LABEL, estimate, recommend, shapeOf, type BodyScan, type BodyType, type Measurements } from '../sizing';
+import { BODY_LABEL, estimate, GENDER_LABEL, recommend, shapeOf, type BodyScan, type BodyType, type Gender, type Measurements } from '../sizing';
 import { toast, useStore } from '../store';
 
 const probe = (storeId: string, category: Category) => ({ storeId, category }) as Product;
@@ -20,6 +20,7 @@ export default function SizeMatch() {
     height: profile.height, weight: profile.weight, body: profile.body,
     chest: profile.chest, waist: profile.waist, hips: profile.hips, shoe: profile.shoe,
   });
+  const [gender, setGender] = useState<Gender>(profile.gender ?? 'male');
   const [scan, setScan] = useState<BodyScan | undefined>(profile.scan);
   const [state, setState] = useState<ScanState>({ status: 'idle' });
   const fileRef = useRef<HTMLInputElement>(null);
@@ -28,11 +29,11 @@ export default function SizeMatch() {
 
   const set = (k: keyof Measurements, v: number | BodyType) => setM((x) => ({ ...x, [k]: v }));
   const auto = () => {
-    setM((x) => ({ ...x, ...estimate(x.height, x.weight, x.body) }));
+    setM((x) => ({ ...x, ...estimate(x.height, x.weight, x.body, gender) }));
     toast('AI o‘lchamlarni hisobladi');
   };
   const save = () => {
-    updateProfile({ ...m, scan, measured: true });
+    updateProfile({ ...m, gender, scan, measured: true });
     toast(scan ? 'Tanangizning 1:1 nusxasi profilga saqlandi' : 'O‘lchamlar profilga saqlandi');
   };
 
@@ -75,7 +76,7 @@ export default function SizeMatch() {
     </label>
   );
 
-  const shape = shapeOf({ ...m, scan });
+  const shape = shapeOf({ ...m, scan, gender, facePhoto: profile.facePhoto });
 
   return (
     <div className="wrap page">
@@ -161,6 +162,17 @@ export default function SizeMatch() {
       <div className="size-layout">
         <section className="card">
           <h3>1. Asosiy ma’lumotlar</h3>
+          <div className="field">
+            <span>3D model jinsi</span>
+            <div className="chips gender-chips">
+              {(Object.keys(GENDER_LABEL) as Gender[]).map((g) => (
+                <button key={g} className={'chip' + (gender === g ? ' on' : '')} onClick={() => {
+                  setGender(g);
+                  setM((x) => ({ ...x, ...estimate(x.height, x.weight, x.body, g) }));
+                }}>{GENDER_LABEL[g]}</button>
+              ))}
+            </div>
+          </div>
           <div className="form2">
             {num('height', 'Bo‘y', 'sm', 140, 210)}
             {num('weight', 'Vazn', 'kg', 35, 160)}

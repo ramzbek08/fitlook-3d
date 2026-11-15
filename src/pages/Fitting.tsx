@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Avatar3D from '../components/Avatar3D';
 import { ProductImage } from '../components/ProductImage';
 import { Icon } from '../components/Icon';
 import { Swatch, tileBg, useWorn } from '../components/ui';
 import { CATEGORY_SLOT, fmt, sizesOf, SLOT_LABEL, STORE_BY_ID, type Slot } from '../data';
-import { BODY_LABEL, estimate, FIT_LABEL, fitFor, recommend, shapeOf, type BodyType } from '../sizing';
+import { readFaceFile } from '../facePhoto';
+import { BODY_LABEL, estimate, FIT_LABEL, fitFor, GENDER_LABEL, recommend, shapeOf, type BodyType, type Gender } from '../sizing';
 import { toast, useStore } from '../store';
 
 const SLOTS: Slot[] = ['top', 'bottom', 'full', 'shoes', 'head'];
@@ -21,10 +22,25 @@ export default function Fitting() {
   const [heat, setHeat] = useState(false);
   const [slot, setSlot] = useState<Slot>('top');
   const [lookName, setLookName] = useState('');
+  const faceRef = useRef<HTMLInputElement>(null);
 
-  const setBody = (patch: Partial<{ height: number; weight: number; body: BodyType }>) => {
-    const next = { height: profile.height, weight: profile.weight, body: profile.body, ...patch };
-    updateProfile({ ...next, ...(profile.measured ? {} : estimate(next.height, next.weight, next.body)) });
+  const setBody = (patch: Partial<{ height: number; weight: number; body: BodyType; gender: Gender }>) => {
+    const next = { height: profile.height, weight: profile.weight, body: profile.body, gender: profile.gender, ...patch };
+    updateProfile({
+      ...next,
+      ...(profile.measured ? {} : estimate(next.height, next.weight, next.body, next.gender)),
+    });
+  };
+
+  const onFace = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const facePhoto = await readFaceFile(file);
+      updateProfile({ facePhoto });
+      toast('Yuzingiz 3D modelga qo‘yildi');
+    } catch {
+      toast('Rasmni yuklab bo‘lmadi');
+    }
   };
 
   const lines = outfit.flatMap((o) => {
@@ -70,6 +86,25 @@ export default function Fitting() {
             <div className="row between">
               <h3>Tana parametrlari</h3>
               <Link to="/size" className="link small">Aniq o‘lchamlar</Link>
+            </div>
+            <div className="chips gender-chips">
+              {(Object.keys(GENDER_LABEL) as Gender[]).map((g) => (
+                <button key={g} className={'chip' + (profile.gender === g ? ' on' : '')} onClick={() => setBody({ gender: g })}>
+                  {GENDER_LABEL[g]} 3D
+                </button>
+              ))}
+            </div>
+            <div className="face-upload">
+              {profile.facePhoto ? <img src={profile.facePhoto} alt="" className="face-preview" /> : <div className="face-preview empty"><Icon name="user" size={22} /></div>}
+              <div className="grow">
+                <b>Yuzingizni qo‘ying</b>
+                <p className="muted small">Selfie yuklang — 3D model yuzi siznikiga o‘xshaydi</p>
+                <div className="row gap-s mt-xs wrap-row">
+                  <button className="btn sm ghost" onClick={() => faceRef.current?.click()}><Icon name="spark" size={14} /> Rasm yuklash</button>
+                  {profile.facePhoto && <button className="link small" onClick={() => updateProfile({ facePhoto: undefined })}>O‘chirish</button>}
+                </div>
+              </div>
+              <input ref={faceRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => { onFace(e.target.files?.[0]); e.target.value = ''; }} />
             </div>
             {profile.scan ? (
               <div className="scan-mini">

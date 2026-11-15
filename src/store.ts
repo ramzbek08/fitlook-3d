@@ -12,13 +12,16 @@ import {
   type StoreReview,
 } from './data';
 import type { Courier } from './delivery';
-import { estimate, type BodyScan, type BodyType, type Measurements } from './sizing';
+import { estimate, type BodyScan, type BodyType, type Gender, type Measurements } from './sizing';
 
 export interface Profile extends Measurements {
   name: string;
   phone: string;
   measured: boolean;
   premium: boolean;
+  gender: Gender;
+  /** Cropped selfie used as the 3D avatar face. */
+  facePhoto?: string;
   scan?: BodyScan;
 }
 
@@ -89,12 +92,12 @@ export const ORDER_STEPS = ['Qabul qilindi', 'Yig‘ilmoqda', 'Yo‘lda', 'Yetka
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
-const defaultBody = { height: 170, weight: 65, body: 'ortacha' as BodyType };
+const defaultBody = { height: 170, weight: 65, body: 'ortacha' as BodyType, gender: 'male' as Gender };
 const DEFAULT_PROFILE: Profile = {
   name: '',
   phone: '',
   ...defaultBody,
-  ...estimate(defaultBody.height, defaultBody.weight, defaultBody.body),
+  ...estimate(defaultBody.height, defaultBody.weight, defaultBody.body, defaultBody.gender),
   measured: false,
   premium: false,
 };
@@ -272,11 +275,15 @@ export const useStore = create<State>()(
     }),
     {
       name: 'fitlook-3d-v1',
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
         const s = persisted as Partial<State>;
         if (version < 2 && s.products) {
           s.products = s.products.map((p) => ({ ...p, variant: SEED_PRODUCTS.find((x) => x.id === p.id)?.variant ?? p.variant }));
+        }
+        if (version < 3 && s.profile) {
+          const p = s.profile as Profile;
+          if (!p.gender) p.gender = 'male';
         }
         return s as State;
       },
