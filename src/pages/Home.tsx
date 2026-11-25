@@ -16,8 +16,8 @@ const STEPS = [
 ];
 
 const FEATURES = [
+  { icon: 'spark', t: 'AI stilist', d: 'Vaziyat va byudjetga qarab kiyim maslahat beradi.', to: '/advisor' },
   { icon: 'layers', t: 'Look builder', d: 'Bir nechta kiyimni birga kiydirib, to‘plam yarating.', to: '/fitting' },
-  { icon: 'spark', t: 'AI stilist', d: 'Byudjet va vaziyatga qarab tayyor obrazlar.', to: '/looks' },
   { icon: 'rotate', t: '360° ko‘rinish', d: 'Kiyimni har tomondan aylantirib ko‘ring.', to: '/fitting' },
   { icon: 'bell', t: 'Narx ogohlantirish', d: 'Narx tushsa darhol xabar olasiz.', to: '/wishlist' },
   { icon: 'map', t: 'Do‘kon xaritasi', d: 'Eng yaqin filial va mavjud o‘lchamlar.', to: '/map' },
@@ -41,7 +41,59 @@ export default function Home() {
 
   return (
     <>
-      <section className="wrap store-home">
+      <section className="hero wrap">
+        <div className="hero-copy">
+          <span className="pill"><i className="live" /> Toshkentdagi {STORES.length} ta do‘kon onlayn</span>
+          <h1>
+            Kiyimni sotib olishdan oldin <span className="hl">o‘zingizda</span> ko‘ring.
+          </h1>
+          <p className="lead">
+            FITLOOK 3D — raqamli savdo markazi. AI stilist kiyim tanlaydi, o‘lchamni aniqlaydi, 3D maneken esa
+            sizda qanday turishini ko‘rsatadi.
+          </p>
+          <div className="row gap wrap-row">
+            <Link to="/advisor" className="btn coral lg"><Icon name="spark" /> AI dan maslahat</Link>
+            <Link to="/fitting" className="btn ghost lg"><Icon name="cube" /> 3D xona</Link>
+          </div>
+          <div className="hero-stats">
+            <div><b>{products.length}+</b><span>mahsulot</span></div>
+            <div><b>94%</b><span>o‘lcham aniqligi</span></div>
+            <div><b>360°</b><span>virtual ko‘rinish</span></div>
+          </div>
+        </div>
+        <div className="hero-stage">
+          <Avatar3D shape={shape} worn={worn} zoom={false} />
+          <div className="float f1">
+            <small>Sizning profilingiz</small>
+            <b>{profile.height} sm · {profile.weight} kg</b>
+            <span>{profile.scan ? 'AI skaner · 1:1 tana' : `${BODY_LABEL[profile.body]} tana`}</span>
+          </div>
+          <div className="float f2">
+            <small>AI Size Match</small>
+            <b>{rec.size} o‘lcham</b>
+            <span className="ok">{rec.percent}% mos</span>
+          </div>
+          <div className="float f3"><Icon name="rotate" size={16} /> Sichqoncha bilan aylantiring</div>
+        </div>
+      </section>
+
+      <section className="wrap section ai-banner">
+        <div className="ai-banner-in">
+          <div>
+            <div className="kicker light">Yangi</div>
+            <h2>AI stilist endi suhbatlashadi</h2>
+            <p>Vaziyat, uslub, mavsum va byudjetni ayting — tayyor obraz, o‘lcham va 3D sinov bir joyda.</p>
+            <Link to="/advisor" className="btn coral">Maslahat olish <Icon name="arrow" size={16} /></Link>
+          </div>
+          <ul className="ai-banner-list">
+            <li><Icon name="check" size={16} /> Ofis, sport, bayram va kundalik</li>
+            <li><Icon name="check" size={16} /> Rang va byudjetga mos tanlov</li>
+            <li><Icon name="check" size={16} /> Bir bosishda 3D xonaga o‘tish</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="wrap store-home section">
         <div className="sec-head">
           <div>
             <div className="kicker">Raqamli savdo markazi</div>
@@ -63,42 +115,6 @@ export default function Home() {
               </Link>
             );
           })}
-        </div>
-      </section>
-
-      <section className="hero wrap">
-        <div className="hero-copy">
-          <span className="pill"><i className="live" /> Toshkentdagi {STORES.length} ta do‘kon onlayn</span>
-          <h1>
-            Kiyimni sotib olishdan oldin <span className="hl">o‘zingizda</span> ko‘ring.
-          </h1>
-          <p className="lead">
-            FITLOOK 3D — raqamli savdo markazi. Do‘konlardan kiyim tanlang, AI o‘lchamingizni aniqlaydi, 3D maneken esa
-            kiyim sizda qanday turishini ko‘rsatadi.
-          </p>
-          <div className="row gap">
-            <Link to="/fitting" className="btn coral lg"><Icon name="cube" /> 3D xonani ochish</Link>
-            <Link to="/catalog" className="btn ghost lg">Katalog <Icon name="arrow" size={18} /></Link>
-          </div>
-          <div className="hero-stats">
-            <div><b>{products.length}+</b><span>mahsulot</span></div>
-            <div><b>94%</b><span>o‘lcham aniqligi</span></div>
-            <div><b>360°</b><span>virtual ko‘rinish</span></div>
-          </div>
-        </div>
-        <div className="hero-stage">
-          <Avatar3D shape={shape} worn={worn} zoom={false} />
-          <div className="float f1">
-            <small>Sizning profilingiz</small>
-            <b>{profile.height} sm · {profile.weight} kg</b>
-            <span>{profile.scan ? 'AI skaner · 1:1 tana' : `${BODY_LABEL[profile.body]} tana`}</span>
-          </div>
-          <div className="float f2">
-            <small>AI Size Match</small>
-            <b>{rec.size} o‘lcham</b>
-            <span className="ok">{rec.percent}% mos</span>
-          </div>
-          <div className="float f3"><Icon name="rotate" size={16} /> Sichqoncha bilan aylantiring</div>
         </div>
       </section>
 

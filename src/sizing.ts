@@ -135,6 +135,21 @@ export function recommend(m: Measurements, product: Product): FitResult {
   return { size: CLOTH_SIZES[best], percent: pct(bestD), state: 'good', note };
 }
 
+/** How the garment should sit on the body: −1 squeezed, 0 true to body, +1 oversized. */
+export function garmentEase(m: Measurements, product: Product, size: string): number {
+  const slot = CATEGORY_SLOT[product.category];
+  if (slot === 'head') return 0;
+  if (slot === 'shoes') {
+    const diff = Number(size) - m.shoe;
+    if (!Number.isFinite(diff)) return 0;
+    return Math.max(-1, Math.min(1, diff / 1.5));
+  }
+  const recIdx = CLOTH_SIZES.indexOf(recommend(m, product).size);
+  const idx = CLOTH_SIZES.indexOf(size);
+  if (idx < 0 || recIdx < 0) return 0;
+  return Math.max(-1, Math.min(1, (idx - recIdx) / 1.6));
+}
+
 export function fitFor(m: Measurements, product: Product, size: string): FitResult {
   const rec = recommend(m, product);
   const slot = CATEGORY_SLOT[product.category];

@@ -8,6 +8,7 @@ import ProductPage from './pages/ProductPage';
 import Fitting from './pages/Fitting';
 import SizeMatch from './pages/SizeMatch';
 import Looks from './pages/Looks';
+import Advisor from './pages/Advisor';
 import MapPage from './pages/MapPage';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="fitting" element={<Fitting />} />
         <Route path="size" element={<SizeMatch />} />
         <Route path="looks" element={<Looks />} />
+        <Route path="advisor" element={<Advisor />} />
         <Route path="map" element={<MapPage />} />
         <Route path="cart" element={<Cart />} />
         <Route path="checkout" element={<Checkout />} />

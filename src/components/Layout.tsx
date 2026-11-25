@@ -8,8 +8,9 @@ const NAV = [
   { to: '/catalog', label: 'Katalog' },
   { to: '/stores', label: 'Do‘konlar' },
   { to: '/fitting', label: '3D xona' },
+  { to: '/advisor', label: 'AI stilist' },
   { to: '/size', label: 'AI o‘lcham' },
-  { to: '/looks', label: 'Look & Stilist' },
+  { to: '/looks', label: 'Looklar' },
   { to: '/map', label: 'Xarita' },
 ];
 
@@ -115,6 +116,7 @@ export default function Layout() {
             <h4>Xaridor</h4>
             <Link to="/catalog">Katalog</Link>
             <Link to="/fitting">3D kiyinish xonasi</Link>
+            <Link to="/advisor">AI stilist</Link>
             <Link to="/size">AI Size Match</Link>
             <Link to="/orders">Buyurtmalarim</Link>
           </div>

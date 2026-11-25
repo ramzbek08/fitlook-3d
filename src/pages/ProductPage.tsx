@@ -6,7 +6,7 @@ import { Icon } from '../components/Icon';
 import { Empty, ProductCard, Stars, Swatch, tileBg } from '../components/ui';
 import { CATEGORY_LABEL, CATEGORY_SLOT, COLORS, discountOf, fmt, sizesOf, STORE_BY_ID } from '../data';
 import { StoreEmblem } from '../components/StoreEmblem';
-import { FIT_LABEL, fitFor, recommend, shapeOf, sizeChart } from '../sizing';
+import { FIT_LABEL, fitFor, garmentEase, recommend, shapeOf, sizeChart } from '../sizing';
 import { toast, useProduct, useStore, type Review } from '../store';
 
 export default function ProductPage() {
@@ -75,7 +75,7 @@ export default function ProductPage() {
             <div className="pdp-photo stage">
               <Avatar3D
                 shape={shapeOf(profile)}
-                worn={[{ category: p.category, color: color || p.colors[0], fit: fit.state, variant: p.variant }]}
+                worn={[{ category: p.category, color: color || p.colors[0], fit: fit.state, ease: garmentEase(profile, p, size || fit.size), variant: p.variant }]}
               />
               <div className={'fit-chip ' + fit.state}>{size} · {FIT_LABEL[fit.state]} · {fit.percent}%</div>
             </div>
@@ -116,6 +116,9 @@ export default function ProductPage() {
               </div>
             </div>
             <div className="meter"><i style={{ width: rec.percent + '%' }} /></div>
+            <Link to="/advisor" className="ai-style-link">
+              <Icon name="spark" size={15} /> Bu kiyimga mos to‘plam kerakmi? AI stilistga o‘ting
+            </Link>
           </div>
 
           <div className="opt">
